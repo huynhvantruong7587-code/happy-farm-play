@@ -153,7 +153,7 @@ export const ANIMALS = Object.fromEntries([
   ['goldfish','金鱼苗','🐠','pond',65,3,3,{goldfishMeat:1}],
 ].map(([id,name,emoji,zone,cost,minutes,unlockLevel,outputs]) =>
   [id,{id,name,emoji,zone,cost,growMs:minutes*60000,unlockLevel,outputs,xp:minutes*2}]));
-export const ZONE_NAMES = { farm:'农田', shop:'仓库', house:'暂未开放', mill:'饲料加工厂', chicken:'鸡舍', pig:'猪圈', cow:'牛棚', sheep:'羊圈', pond:'鱼塘' };
+export const ZONE_NAMES = { farm:'农田', shop:'仓库', house:'农场主小屋', mill:'饲料加工厂', chicken:'鸡舍', pig:'猪圈', cow:'牛棚', sheep:'羊圈', pond:'鱼塘' };
 export const PEN_SIZES = { pig:3, cow:3, sheep:3, pond:4, chicken:4 };
 
 /** 后续迭代：建筑（占位，暂不开放） */
