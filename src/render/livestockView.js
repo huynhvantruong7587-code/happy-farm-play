@@ -63,15 +63,22 @@ export function makeZones() {
 export function zonePolygon(z) {return z.hit;}
 export function pointInZone(x,y,z) {return inside(x,y,z.hit);}
 function polygonArea(poly) {return Math.abs(poly.reduce((sum,[x,y],i)=>{const [nx,ny]=poly[(i+1)%poly.length];return sum+x*ny-y*nx;},0))/2;}
-export function emptySign(z) {const p=zoneAttachment(z,'empty');if(!p)return null;return {x:p.x-48,y:p.y-12,w:96,h:24};}
-export function nameSign(z) {const p=zoneAttachment(z,'name');return {x:p.x-(z.walk?36:70),y:p.y-12,w:z.walk?72:140,h:24};}
+function signBox(z, attachment, text, zoom) {
+  const p=zoneAttachment(z,attachment);
+  if(!p)return null;
+  const font=Math.min(Math.max(28,13/zoom),26/zoom);
+  const w=text.length*font*.95+18,h=font*1.85;
+  return {x:p.x-w/2,y:p.y-h/2,w,h,font};
+}
+export function emptySign(z, zoom=1) {return signBox(z,'empty',z.id==='pond'?'去买鱼苗':'去买幼崽',zoom);}
+export function nameSign(z, zoom=1) {return signBox(z,'name',z.label,zoom);}
 export function hitTestZone(x,y,layout) {
   const c=layout.camera;x=(x-c.x)/c.zoom;y=(y-c.y)/c.zoom;
   return layout.zones.filter(z=>pointInZone(x,y,z)).sort((a,b)=>polygonArea(a.hit)-polygonArea(b.hit))[0]||null;
 }
 export function hitTestEmptySign(x,y,layout,state) {
   const c=layout.camera;x=(x-c.x)/c.zoom;y=(y-c.y)/c.zoom;
-  return layout.zones.find(z=>{const b=emptySign(z);return b && state.pens[z.id]?.every(o=>!o)&&x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h;})||null;
+  return layout.zones.find(z=>{const b=emptySign(z,c.zoom);return b && state.pens[z.id]?.every(o=>!o)&&x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h;})||null;
 }
 export function occupantPosition(o,z,slot,t) {
   let seed=0;for(const c of o.id)seed=(seed*31+c.charCodeAt(0))>>>0;
@@ -135,10 +142,10 @@ export function drawLivestock(ctx,state,layout,t,now) {
   for(const front of Object.values(MAP_LAYOUT.FRONTS))drawSprite(ctx,front.file,front.x,front.y,front.w,front.h);
   for(const b of animalBubbles(views,t))drawAnimalBubble(ctx,b);
   for(const z of layout.zones){
-    for(const [s,text,size] of [[nameSign(z),z.label,15],...(state.pens[z.id]?.every(o=>!o)?[[emptySign(z),z.id==='pond'?'去买鱼苗':'去买幼崽',12]]:[])]) {
+    for(const [s,text] of [[nameSign(z,layout.camera.zoom),z.label],...(state.pens[z.id]?.every(o=>!o)?[[emptySign(z,layout.camera.zoom),z.id==='pond'?'去买鱼苗':'去买幼崽']]:[])]) {
       rect(ctx,s.x,s.y,s.w,s.h,4,'#8a5a32');
       rect(ctx,s.x+2,s.y+2,s.w-4,s.h-4,3,'#f3e0b0');
-      drawText(ctx,text,s.x+s.w/2,s.y+s.h/2,{size,color:'#5a3a22',weight:'800'});
+      drawText(ctx,text,s.x+s.w/2,s.y+s.h/2,{size:s.font,color:'#5a3a22',weight:'800'});
     }
   }
   return views;

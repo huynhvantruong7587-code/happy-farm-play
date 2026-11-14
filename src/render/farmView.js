@@ -25,7 +25,7 @@ export function zoneBounds(layout, id) {
   const z=layout.zones.find(z=>z.id===id);
   if (!z) return null;
   const b=z.bounds;
-  const boxes=[b,emptySign(z),nameSign(z)].filter(Boolean),x=Math.min(...boxes.map(b=>b.x))-20,y=Math.min(...boxes.map(b=>b.y))-20;
+  const boxes=[b,emptySign(z,.45),nameSign(z,.45)].filter(Boolean),x=Math.min(...boxes.map(b=>b.x))-20,y=Math.min(...boxes.map(b=>b.y))-20;
   return {x,y,w:Math.max(...boxes.map(b=>b.x+b.w))-x+20,h:Math.max(...boxes.map(b=>b.y+b.h))-y+20};
 }
 export function cameraForZone(layout, id) {
@@ -36,6 +36,20 @@ export function cameraForZone(layout, id) {
   if(id==='farm')target.x+=Math.min(56,Math.max(0,(layout.cssW-b.w*zoom)/2-12));
   clampCamera(target,layout.cssW,layout.cssH);
   return target;
+}
+// Keep the field clear of the left jump column while retaining the cottage hub.
+export function homeCamera(layout) {
+  const hub=cameraForZone(layout,'house');
+  const center={x:(layout.cssW/2-hub.x)/hub.zoom,y:(layout.cssH/2-hub.y)/hub.zoom};
+  hub.zoom*=.85;
+  hub.x=layout.cssW/2-center.x*hub.zoom;
+  hub.y=layout.cssH/2-center.y*hub.zoom;
+  const fieldLeft=Math.min(...layout.plots.map(p=>p.x))*hub.zoom+hub.x;
+  const house=layout.zones.find(z=>z.id==='house').bounds;
+  const rightRoom=layout.cssW-12-((house.x+house.w)*hub.zoom+hub.x);
+  hub.x+=Math.max(0,Math.min(64-fieldLeft,rightRoom));
+  clampCamera(hub,layout.cssW,layout.cssH);
+  return hub;
 }
 export function interpolateCamera(from,to,progress) {
   const e=1-Math.pow(1-Math.max(0,Math.min(1,progress)),3);

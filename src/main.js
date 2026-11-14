@@ -11,7 +11,7 @@ import { plant, harvest, getPlotView, forceRipe } from './game/systems/farm.js';
 import { buySeed, sellCrop } from './game/systems/economy.js';
 import { addXp } from './game/systems/progression.js';
 import { createRenderer } from './render/canvas.js';
-import { computeLayout, hitTestPlot, clampCamera, cameraForZone, interpolateCamera, WORLD, drawFarm } from './render/farmView.js';
+import { computeLayout, hitTestPlot, clampCamera, homeCamera, cameraForZone, interpolateCamera, WORLD, drawFarm } from './render/farmView.js';
 import { createEffects } from './render/effects.js';
 import { updateHud } from './ui/hud.js';
 import { renderShop, renderBag, renderMore, renderSeedTray, setActiveTab } from './ui/panels.js';
@@ -232,10 +232,7 @@ function frame(animationNow) {
   renderer.resize();
   const { cssW, cssH } = renderer.size;
   if (!cameraInitialized) {
-    const hub=cameraForZone(computeLayout(cssW,cssH),'house');
-    const center={x:(cssW/2-hub.x)/hub.zoom,y:(cssH/2-hub.y)/hub.zoom};
-    hub.zoom*=.85;hub.x=cssW/2-center.x*hub.zoom;hub.y=cssH/2-center.y*hub.zoom;
-    Object.assign(camera,hub);
+    Object.assign(camera,homeCamera(computeLayout(cssW,cssH)));
     cameraInitialized = true;
   }
   if(cameraTween) {
