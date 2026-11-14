@@ -49,8 +49,11 @@ export function normalizeState(raw, now = Date.now()) {
 
   const expected = plotCount();
   const plots = Array.isArray(raw.plots) ? raw.plots : [];
+  // Legacy rows were three beds wide; preserve their row/column on the left.
+  const legacy = plots.length < 24 || raw.version <= 10;
   state.plots = Array.from({ length: expected }, (_, i) => {
-    const p = plots[i];
+    const c = i % GAME.cols, r = Math.floor(i / GAME.cols);
+    const p = legacy ? (c < 3 && r < 4 ? plots[r * 3 + c] : null) : plots[i];
     if (!p || typeof p !== 'object') return { cropId: null, plantedAt: 0 };
     const cropId = p.cropId && CROPS[p.cropId] ? p.cropId : null;
     const plantedAt = cropId && Number.isFinite(p.plantedAt) ? p.plantedAt : 0;

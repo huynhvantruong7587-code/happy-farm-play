@@ -237,7 +237,8 @@ function frame(animationNow) {
   }
   if(cameraTween) {
     const a=cameraTween,t=Math.min(1,(animationNow-a.start)/520);
-    const target=cameraForZone(computeLayout(cssW,cssH),a.id);
+    const view=computeLayout(cssW,cssH);
+    const target=a.id==='house'?homeCamera(view):cameraForZone(view,a.id);
     Object.assign(camera,interpolateCamera(a.from,target,t));
     if(t>=1)cameraTween=null;
   }

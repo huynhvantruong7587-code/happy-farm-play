@@ -2,9 +2,9 @@
 
 export const GAME = {
   name: '开心农场',
-  version: 10,
+  version: 11,
   saveKey: 'happy-farm-h5-v1',
-  cols: 3,
+  cols: 6,
   rows: 4,
   startCoins: 80,
   startSeeds: { wheat: 3, carrot: 0, corn: 0, cabbage: 2 },
