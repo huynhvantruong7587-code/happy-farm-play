@@ -127,13 +127,11 @@
 
     <div id="panel-mill" class="modal hidden" role="dialog" aria-modal="true" aria-label="饲料加工厂">
       <div class="modal-card">
-        <h2>饲料加工厂</h2>
+        <h2>⚙️ 饲料加工厂</h2>
         <p id="mill-inventory"></p>
-        <p>小麦×2 → 饲料×1</p>
-        <button type="button" class="btn btn-buy" data-mill-material="wheat">制作</button>
-        <p>玉米×1 → 饲料×1</p>
-        <button type="button" class="btn btn-buy" data-mill-material="corn">制作</button>
-        <button type="button" id="btn-close-mill" class="btn">关闭</button>
+        <div class="recipe-row"><div data-recipe="wheat"></div><button type="button" class="pill-primary" data-mill-material="wheat">制作</button></div>
+        <div class="recipe-row"><div data-recipe="corn"></div><button type="button" class="pill-primary" data-mill-material="corn">制作</button></div>
+        <button type="button" id="btn-close-mill" class="pill-secondary">关闭</button>
       </div>
     </div>
     <div id="modal-levelup" class="modal hidden" role="dialog" aria-modal="true" aria-label="升级">

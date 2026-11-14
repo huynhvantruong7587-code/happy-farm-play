@@ -785,35 +785,66 @@ html, body {
 #hud-level { font-size: 12px; }
 .xp-bar { height: 7px; }
 #hud-xp-text { font-size: 10px; }
-.seed-tray { left: 50%; right: auto; transform: translateX(-50%); width: min(50%, 420px); border-radius: 12px 12px 0 0; align-items: center; }
+.seed-tray { left: 50%; right: auto; transform: translateX(-50%); width: min(calc(100% - 148px), 680px); border-radius: 12px 12px 0 0; align-items: center; }
 #app.tray-open { --tray-h: 72px; }
 #app.tray-open .seed-tray { padding: 5px 10px; gap: 8px; }
-.seed-chip { min-height: 56px; flex: 0 0 78px; min-width: 78px; padding: 3px 6px; }
+.seed-chip { min-height: 56px; flex: 0 0 70px; min-width: 70px; padding: 3px 6px; }
 .animal-overlay { position: absolute; inset: 0; z-index: 25; background: #25351d88; display: flex; align-items: center; justify-content: center; padding: 6px 56px; }
 .animal-overlay[hidden] { display: none; }
-.animal-panel { width: min(540px,100%); max-height: 100%; overflow-y: auto; border: 7px solid #946032; border-radius: 17px; background: linear-gradient(#fff3d2,#e8c998); padding: 8px 14px 6px; color: #654323; box-shadow: inset 0 0 0 2px #d3a05e,0 6px 20px #263c2366; }
-.animal-panel h2 { margin: 0 0 4px; font-size: 18px; }
-#animal-inventory { font-size: 12px; margin: 2px 0 4px; }
-.animal-slot { border-top: 1px solid #bd9259; padding: 3px 0; }
-.animal-slot p { margin: 0 0 3px; font-size: 12px; }
-.animal-slot small { display: block; margin-bottom: 3px; }
-.animal-slot button { border: 1px solid #ae7a42; border-radius: 8px; background: #fff3cb; color: #654323; font: 700 12px var(--font); padding: 4px 8px; margin: 0 4px 2px 0; cursor: pointer; }
-.animal-slot button:disabled { opacity: .45; cursor: default; }
-
-.animal-overlay:not([hidden]) ~ .toasts { z-index: 31; }
-
-.seed-tray { justify-content: center; text-align: center; color: #fff6de; font-weight: 700; font-size: 14px; }
-
 @font-face { font-family: FarmSign; src: url('../assets/fonts/sign-serif.woff2') format('woff2'); font-weight: 700; font-display: block; }
+.animal-overlay:not([hidden]) ~ .toasts { z-index: 31; }
+.seed-tray { justify-content: safe center; text-align: center; color: #fff6de; font-weight: 700; font-size: 14px; }
 .zone-jump { height: 30px; min-height: 30px; }
 .zone-actions { bottom: 5px; }
-.animal-panel { position: relative; width: min(700px,100%); overflow: auto; }
-#animal-slots { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
-.animal-slot { text-align: center; border: 1px solid #bc955b; border-radius: 8px; background: #fff4d5; padding: 4px; min-width: 0; }
-.animal-slot small { font-size: 10px; min-height: 12px; }
-.animal-slot.is-locked { background: #d6c4a0; color: #847359; display: flex; flex-direction: column; justify-content: center; }
-.slot-sprite { width: 48px; height: 38px; object-fit: contain; display: block; margin: auto; }
-.animal-slot progress { display: block; height: 6px; width: 90%; margin: 2px auto; accent-color: #7b9547; }
+.animal-panel, #panel-mill .modal-card { position: relative; box-sizing: border-box; max-height: 100%; overflow: auto; border: 7px solid #946032; border-radius: 17px; background: linear-gradient(#fff3d2,#e8c998); padding: 10px 14px; color: #654323; box-shadow: inset 0 0 0 2px #d3a05e,0 6px 20px #263c2366; }
+.animal-panel { width: min(700px,100%); }
+.animal-panel h2, #panel-mill h2 { margin: 0 24px 6px; font-size: 18px; }
+#animal-inventory, #mill-inventory { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; font-size: 12px; margin: 4px 0 8px; }
+#animal-slots { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.animal-slot { text-align: center; border: 0; border-radius: 13px; background: linear-gradient(145deg,#fff9e9,#f5e4bf); box-shadow: 0 2px 5px #865c2925,inset 0 1px #fffdf4; padding: 7px 5px; min-width: 0; }
+.animal-slot p { margin: 4px 0; font-size: 12px; }
+.animal-slot small { display: block; font-size: 10px; margin: 5px 0; }
+.animal-slot.is-locked { color: #a18a63; display: flex; flex-direction: column; justify-content: center; background: linear-gradient(145deg,#efe4cc,#e2d2b0); box-shadow: inset 0 0 0 1px #d9c7a2; }
+.empty-cue { color: #ae9367; padding-top: 20px; }
+.slot-sprite { width: 78px; height: 64px; object-fit: contain; display: block; margin: auto; }
+.item-count { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; font-size: 12px; }
+.item-count img { width: 23px; height: 23px; object-fit: contain; }
+.slot-output { margin: 4px 0; }
+.state-pill { display: inline-block; border-radius: 20px; padding: 3px 7px; font-size: 10px; white-space: nowrap; }
+.state-pill.hungry { background: #efd1b9; color: #a35335; }
+.state-pill.growing { background: #dce8c7; color: #557044; }
+.state-pill.ready, .generous-badge { background: #ffe4a0; color: #946418; }
+.growth-track { height: 8px; border-radius: 9px; overflow: hidden; background: #d9ccaa; margin: 5px 5px; }
+.growth-track > div { height: 100%; border-radius: inherit; background: linear-gradient(90deg,#a4ca6c,#609c46); }
+.pill-primary, .pill-secondary { display: inline-block; width: auto; border-radius: 24px; padding: 6px 12px; margin: 2px; font: 700 12px var(--font); cursor: pointer; }
+.pill-primary { border: 0; background: linear-gradient(#7bb64a,#5a9a32); color: white; box-shadow: 0 2px 3px #4d70252b; }
+.pill-secondary { border: 1px solid #c6a67a; background: #fff3d5; color: #86643e; }
+.pill-primary:disabled, .pill-secondary:disabled { opacity: .38; filter: saturate(.35); box-shadow: none; cursor: default; }
+/* Two complete livestock rows within the 390px landscape app. */
+.animal-panel { padding: 6px 12px; }
+.animal-panel h2 { line-height: 26px; margin-bottom: 2px; }
+#animal-inventory { line-height: 24px; margin: 0 0 6px; }
+#animal-slots:not(.market-slots) { grid-auto-rows: 140px; }
+#animal-slots:not(.market-slots) .animal-slot { padding: 5px; line-height: 16px; }
+#animal-slots:not(.market-slots) .slot-sprite { width: 72px; height: 54px; }
+#animal-slots:not(.market-slots) .state-pill { display: table; margin: 0 auto; padding: 1px 7px; line-height: 16px; }
+#animal-slots:not(.market-slots) .growth-track { height: 5px; margin: 2px 5px; }
+#animal-slots:not(.market-slots) .slot-output { height: 22px; margin: 1px 0; line-height: 22px; }
+.slot-output .item-count { vertical-align: top; line-height: 22px; }
+.slot-output .item-count img { width: 20px; height: 20px; }
+#animal-slots:not(.market-slots) button { padding: 3px 10px; margin: 1px 2px; line-height: 18px; vertical-align: top; }
+#animal-slots:not(.market-slots) small { margin: 3px 0; line-height: 14px; }
+#animal-slots:not(.market-slots) .empty-cue { padding-top: 16px; }
+#animal-slots:not(.market-slots) .is-locked { display: grid; align-content: center; justify-items: center; gap: 4px; }
+#animal-slots:not(.market-slots) .is-locked p { margin: 0; line-height: 20px; }
+#animal-slots:not(.market-slots) .is-locked p:first-child { font-size: 24px; line-height: 30px; opacity: .65; }
 #animal-slots.market-slots { grid-template-columns: repeat(3,minmax(0,1fr)); }
-.customer-sprite { width: 100%; height: 120px; object-fit: contain; }
-#panel-mill .modal-card { border: 7px solid #946032; border-radius: 17px; background: linear-gradient(#fff3d2,#e8c998); color: #654323; box-shadow: inset 0 0 0 2px #d3a05e,0 6px 20px #263c2366; }
+.customer-card { display: flex; flex-direction: column; align-items: center; overflow: visible; }
+.customer-sprite { height: 150px; width: auto; max-width: 100%; object-fit: contain; display: block; margin: 6px auto 0; background: transparent; }
+.speech-bubble { position: relative; padding: 8px 14px; border-radius: 14px; background: #fffaf0; box-shadow: 0 2px 5px #9d75442a; margin-bottom: 5px; }
+.speech-bubble::after { content: ''; position: absolute; bottom: -7px; left: 45%; border: 7px solid transparent; border-top-color: #fffaf0; }
+.generous-badge { display: block; border-radius: 20px; font-size: 11px; padding: 3px 7px; margin-bottom: 4px; }
+#panel-mill .modal-card { width: min(420px,100%); }
+.recipe-row, .recipe-row > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.recipe-row { border-radius: 12px; background: #fff5de; padding: 12px; margin: 8px 0; }
+#btn-close-mill { margin-top: 8px; }

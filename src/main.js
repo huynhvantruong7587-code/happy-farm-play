@@ -1,3 +1,4 @@
+import { itemCount } from './ui/icons.js';
 import { tickMarket, sellToCustomer } from './game/systems/market.js';
 import { loadAssets } from './render/assets.js';
 let assetsSettled = false;
@@ -22,17 +23,19 @@ const canvas = document.getElementById('farm-canvas');
 const renderer = createRenderer(canvas);
 
 let state = loadState();
+let selectedPlotIndex = -1;
 let selectedSeed = firstOwnedSeed(state);
 let activeTab = 'farm';
 let trayOpen=false, chromeVisible=true, openZoneId=null;
 const app=document.getElementById('app'), bubble=document.getElementById('panel-animal');
-function setSeedTray(value){trayOpen=!!value;app.classList.toggle('tray-open',trayOpen);}
+function setSeedTray(value){trayOpen=!!value;if(!trayOpen)selectedPlotIndex=-1;app.classList.toggle('tray-open',trayOpen);}
 function setChrome(value){chromeVisible=!!value;app.classList.toggle('chrome-hidden',!chromeVisible);}
 function closeZone(){openZoneId=null;bubble.hidden=true;}
 const millPanel=document.getElementById('panel-mill');
 function closeMill(){millPanel.classList.add('hidden');app.classList.remove('mill-open');}
 function renderMill(){
-  document.getElementById('mill-inventory').textContent=`库存：小麦×${state.inventory.wheat} · 玉米×${state.inventory.corn} · 饲料×${state.inventory.feed}`;
+  document.getElementById('mill-inventory').innerHTML=['wheat','corn','feed'].map(k=>itemCount(k,state.inventory[k])).join('');
+  millPanel.querySelectorAll('[data-recipe]').forEach(r=>{r.innerHTML=itemCount(r.dataset.recipe,r.dataset.recipe==='wheat'?2:1)+'<span>→</span>'+itemCount('feed',1);});
   millPanel.querySelectorAll('[data-mill-material]').forEach(b=>{b.disabled=state.inventory[b.dataset.millMaterial]<(b.dataset.millMaterial==='wheat'?2:1);});
 }
 function openZone(id){
@@ -48,24 +51,24 @@ function renderZone(){
   document.getElementById('animal-slots').classList.remove('market-slots');
   bubble.hidden=false;
   const content=document.getElementById('animal-slots');content.replaceChildren();
-  document.getElementById('animal-title').textContent=ZONE_NAMES[id]+(state.pens[id]?` · ${state.pens[id].filter(Boolean).length} 只`:'');
+  document.getElementById('animal-title').textContent=({chicken:'🐔',pig:'🐷',cow:'🐮',sheep:'🐑',pond:'🐟',market:'🧺'}[id]+' '+ZONE_NAMES[id])+(state.pens[id]?` · ${state.pens[id].filter(Boolean).length} 只`:'');
   if(id==='market'){renderMarket(content);return;}
   const kinds=Object.values(ANIMALS).filter(a=>a.zone===id);
   const productIds=[...new Set([...kinds.flatMap(a=>Object.keys(a.outputs)),...(id==='chicken'?['chickenMeat']:id==='sheep'?['mutton']:[])])];
-  document.getElementById('animal-inventory').textContent='已积累：'+productIds.map(k=>`${PRODUCTS[k].name}×${state.inventory[k]}`).join(' · ')+` · 饲料×${state.inventory.feed}`;
+  document.getElementById('animal-inventory').innerHTML=[...productIds,'feed'].map(k=>itemCount(k,state.inventory[k])).join('');
   state.pens[id].forEach((o,i)=>{
     const v=livestock.getOccupantView(o),row=document.createElement('article');row.className='animal-slot';
     if(i>=slotCount(state.level)){
       row.classList.add('is-locked');row.innerHTML=`<p>🔒</p><p>Lv.${slotUnlockLevel(i)} 解锁</p>`;content.append(row);return;
     }
-    const button=(text,action,disabled=false)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.disabled=disabled;b.onclick=action;row.append(b);};
+    const button=(text,action,disabled=false)=>{const b=document.createElement('button');b.type='button';b.className=text==='出售'?'pill-secondary':'pill-primary';b.textContent=text;b.disabled=disabled;b.onclick=action;row.append(b);};
     if(!o){
       const young=kinds.find(a=>state.stock[a.id]>0)||kinds.find(a=>state.level>=a.unlockLevel)||kinds[0];
-      row.innerHTML=`<p>空栏 · ${i+1}</p><p>${young.name} · ${young.cost} 金币</p><small>库存 ${state.stock[young.id]}</small>`;
+      row.innerHTML=`<p class="empty-cue">空栏</p><small>${young.name} · ${young.cost} 金币</small><small>库存 ${state.stock[young.id]}</small>`;
       button('购买',()=>{if(state.stock[young.id]>0)runLivestock('place',id,i,young.id);else {switchTab('shop');document.getElementById('shop-young').scrollIntoView({block:'start'});}},state.level<young.unlockLevel);
     }else{
-      const output=Object.entries(v.outputs).map(([k,n])=>`${PRODUCTS[k].name}×${n}`).join('、');
-      row.innerHTML=`<img class="slot-sprite" src="assets/animals/${o.kind}-0.webp" alt="${v.animal.name}"><p>${v.animal.name} · ${{hungry:'🥣 饥饿',growing:formatMs(v.remainingMs),ready:'✨ 待收取'}[v.status]}</p><small>${output}</small>${v.status==='growing'?`<progress max="1" value="${v.progress}"></progress>`:''}`;
+      const output=Object.entries(v.outputs).map(([k,n])=>itemCount(k,n)).join('');
+      row.innerHTML=`<img class="slot-sprite" src="assets/animals/${o.kind}-0.webp" alt="${v.animal.name}"><span class="state-pill ${v.status}">${{hungry:'🥣 饥饿',growing:'⏳ '+formatMs(v.remainingMs),ready:'✨ 待收取'}[v.status]}</span>${v.status==='growing'?`<div class="growth-track" role="progressbar" aria-label="生长进度" aria-valuenow="${Math.round(v.progress*100)}" aria-valuemin="0" aria-valuemax="100"><div style="width:${v.progress*100}%"></div></div>`:''}<div class="slot-output">${output}</div>`;
       button(v.status==='ready'?'收取':'喂食',()=>runLivestock(v.status==='ready'?'harvest':'feed',id,i),v.status==='growing');
       if(id==='chicken'||id==='sheep')button('出售',()=>runLivestock(id==='chicken'?'harvestChicken':'harvestMutton',i));
     }
@@ -81,8 +84,8 @@ function renderMarket(content){
     if(!c)card.innerHTML='<p>客人在路上…</p>';
     else {
       const item=CROPS[c.wantId]||PRODUCTS[c.wantId];
-      card.innerHTML=`<img class="customer-sprite" src="assets/market/${c.variant}.webp" alt="客人"><p>${c.generous?'✨ 豪客':''}</p><p>${item.emoji} ${item.name} ×${c.qty}</p><p>🪙 ${c.offer} 金币</p>`;
-      const b=document.createElement('button');b.textContent='卖给他';b.disabled=(state.inventory[c.wantId]||0)<c.qty;
+      card.innerHTML=`<div class="speech-bubble">${c.generous?'<span class="generous-badge">✨ 豪客</span>':''}<div>${itemCount(c.wantId,c.qty)}</div><strong>🪙 ${c.offer}</strong></div><img class="customer-sprite" src="assets/market/${c.variant}.webp" alt="客人">`;
+      const b=document.createElement('button');b.className='pill-primary';b.textContent='卖给他';b.disabled=(state.inventory[c.wantId]||0)<c.qty;
       b.onclick=()=>{const r=sellToCustomer(state,i);if(r.ok){toast(`成交！金币 +${r.coins}`);const coin=document.getElementById('hud-coins')||document.querySelector('.hud');coin?.animate([{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:450});persist();refreshUI();}};card.append(b);
     }
     content.append(card);
@@ -211,6 +214,7 @@ function runLivestock(method,...args) {
   refreshUI();return result;
 }
 function jumpTo(id) {
+  selectedPlotIndex=-1;
   if(!cameraForZone(layout,id))return false;
   document.getElementById('toasts').replaceChildren();
   closeZone();closeMill();
@@ -227,6 +231,7 @@ function tap(x, y) {
   const hit=hitTestPlot(x,y,layout);
   if(!hit){setSeedTray(false);return;}
   setSeedTray(true);
+  selectedPlotIndex=hit.index;
   const view = getPlotView(state.plots[hit.index], Date.now());
   if (view.status === 'ripe') handleHarvest(hit.index);
   else if (view.status === 'empty') handlePlant(hit.index);
@@ -254,7 +259,7 @@ function frame(animationNow) {
   drawnLivestock=livestockViews(state,layout,animationNow);
   // Growth uses Unix time, matching persisted plantedAt. rAF time is cosmetic only.
   drawFarm(renderer.ctx, state, layout, {
-    now: Date.now(), animationNow, selectedSeed, hoveredIndex, debugOverlay,
+    now: Date.now(), animationNow, selectedPlotIndex, debugOverlay,
   });
   effects.draw(renderer.ctx, layout, animationNow, canvas, document.getElementById('warehouse-button'));
   if(openZoneId && state.pens[openZoneId]){const key=JSON.stringify(state.pens[openZoneId].map(o=>{const v=livestock.getOccupantView(o);return [v.status,Math.ceil(v.remainingMs/1000)];}));if(bubble.dataset.status!==key){bubble.dataset.status=key;renderZone();}}
@@ -404,6 +409,7 @@ function exposeDebug() {
     getLayout: () => layout,
     getPlotViews: () => state.plots.map(p => getPlotView(p, Date.now())),
     getSelectedSeed: () => selectedSeed,
+    setSelectedPlot: i => { selectedPlotIndex = Number.isInteger(i)?i:-1; },
     selectSeed,
     plant: (index, cropId) => {
       if (cropId) selectedSeed = cropId;

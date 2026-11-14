@@ -35,16 +35,16 @@ function fitCamera(layout,b,left=12,right=12) {
   return target;
 }
 export function cameraForZone(layout, id) {
-  if(id==='house')return homeCamera(layout);
+  if(id==='house' || id==='farm')return homeCamera(layout);
   const b=zoneBounds(layout,id);
   if(!b)return null;
-  return fitCamera(layout,b,id==='farm'?64:12,id==='pig'?200:12);
+  return fitCamera(layout,b,id==='farm'?64:12,id==='farm'?80:id==='pig'?200:56);
 }
 // Frame the cottage and all field beds, reserving the left navigation strip.
 export function homeCamera(layout) {
   const field=zoneBounds(layout,'farm'),house=layout.zones.find(z=>z.id==='house').bounds;
   const x=field.x,y=Math.min(field.y,house.y)-12;
-  return fitCamera(layout,{x,y,w:house.x+house.w-x+12,h:Math.max(field.y+field.h,house.y+house.h)-y+12},64,12);
+  return fitCamera(layout,{x,y,w:house.x+house.w-x+12,h:Math.max(field.y+field.h,house.y+house.h)-y+12},64,80);
 }
 export function interpolateCamera(from,to,progress) {
   const e=1-Math.pow(1-Math.max(0,Math.min(1,progress)),3);
@@ -62,9 +62,17 @@ export function toScreen(x, y, layout) {
   const c = layout.camera;
   return { x: x * c.zoom + c.x, y: y * c.zoom + c.y };
 }
+export function pointInPlot(x,y,poly) {
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++) {
+    const [ax,ay]=poly[i],[bx,by]=poly[j];
+    if((ay>y)!==(by>y) && x<(bx-ax)*(y-ay)/(by-ay)+ax)inside=!inside;
+  }
+  return inside;
+}
 export function hitTestPlot(x, y, layout) {
   const p = toWorld(x, y, layout);
-  return layout.plots.filter(t => p.x>=t.x && p.x<=t.x+t.w && p.y>=t.y && p.y<=t.y+t.h)
+  return layout.plots.filter(t => p.x>=t.x && p.x<=t.x+t.w && p.y>=t.y && p.y<=t.y+t.h && (!t.poly || pointInPlot(p.x,p.y,t.poly)))
     .sort((a,b)=> Math.hypot(p.x-a.cx,p.y-a.cy)-Math.hypot(p.x-b.cx,p.y-b.cy) || b.cy-a.cy)[0] || null;
 }
 // Return world sizes with readable, bounded CSS sizes after camera scaling.
@@ -79,7 +87,7 @@ export function plotIndicatorSizes(zoom) {
     stroke: bounded(2, 1.5, 2.5),
   };
 }
-export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 0, selectedSeed, hoveredIndex, debugOverlay={} }) {
+export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 0, selectedPlotIndex = -1, debugOverlay={} } = {}) {
   const { cssW, cssH, camera, plots } = layout;
   const indicator = plotIndicatorSizes(camera.zoom);
   // Green edges cover any viewport area outside the painted world.
@@ -88,20 +96,30 @@ export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 
   drawScenery(ctx, WORLD);
   for (const p of [...plots].sort((a,b)=>a.cy-b.cy)) {
     const view = getPlotView(state.plots[p.index], now);
-    if (hoveredIndex===p.index || (selectedSeed && view.status==='empty')) {
-      ctx.beginPath();ctx.rect(p.x,p.y,p.w,p.h);
-      ctx.strokeStyle='rgba(255,235,157,.65)';ctx.lineWidth=2;ctx.stroke();
+    if (selectedPlotIndex===p.index && p.poly) {
+      ctx.beginPath();
+      p.poly.forEach(([x,y],i)=>{x=p.cx+(x-p.cx)*.96;y=p.cy+(y-p.cy)*.96;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+      ctx.closePath();ctx.strokeStyle='#ffe7a1';ctx.lineWidth=2.8;ctx.stroke();
     }
     if(view.status==='empty') continue;
     const ripe=view.status==='ripe';
     const frame=ripe?2:view.progress<.55?0:1;
     const tall=['corn','wheat'].includes(view.crop.id);
-    const width=p.w*(frame===0?.15:tall?.22:.24);
-    const height=p.h*(frame===0?.25:tall?(ripe?.62:.52):(ripe?.4:.35));
-    // Across follows the bed's downward-right slope; the front row steps left.
-    for(let row=0;row<2;row++)for(let col=0;col<3;col++) {
-      const x=p.cx+(col-1)*p.w*.23-(row-.5)*p.w*.15;
-      const y=p.cy+(col-1)*p.h*.10+(row-.5)*p.h*.27+8;
+    const corners=p.poly || [[p.x,p.y],[p.x+p.w,p.y],[p.x+p.w,p.y+p.h],[p.x,p.y+p.h]];
+    const tl=corners.reduce((a,b)=>a[0]+a[1]<b[0]+b[1]?a:b);
+    const opposite=corners[(corners.indexOf(tl)+2)%4];
+    const neighbors=corners.filter(c=>c!==tl && c!==opposite).sort((a,b)=>b[0]-a[0]);
+    const [tr,bl]=neighbors,br=opposite;
+    const shortAxis=Math.min(Math.hypot(tr[0]-tl[0],tr[1]-tl[1]),Math.hypot(bl[0]-tl[0],bl[1]-tl[1]));
+    const width=shortAxis*(frame===0?.50:ripe?.48:.53),height=width*(tall?1.38:1.05);
+    const cols=ripe && ['cabbage','pumpkin','potato'].includes(view.crop.id)?3:4;
+    const plants=[];
+    for(let row=0;row<3;row++)for(let col=0;col<cols;col++) {
+      const u=.14+.72*(col+.5)/cols,v=(tall?.36:.14)+(tall?.54:.72)*(row+.5)/3;
+      plants.push({x:(1-u)*(1-v)*tl[0]+u*(1-v)*tr[0]+(1-u)*v*bl[0]+u*v*br[0],
+        y:(1-u)*(1-v)*tl[1]+u*(1-v)*tr[1]+(1-u)*v*bl[1]+u*v*br[1]});
+    }
+    for(const {x,y} of plants.sort((a,b)=>a.y-b.y)) {
       ctx.save();ctx.translate(x,y);
       if(ripe)ctx.rotate(Math.sin(animationNow/1100+p.index)*.025);
       drawAnchored(ctx,`crops/${view.crop.id}-${frame}.webp`,0,0,width,height);

@@ -69,9 +69,7 @@ export function occupantPosition(o,z,slot,t) {
   const phase=seed%628/100,cycle=t/9000+phase,part=cycle%1,paused=part>.72;
   const poly=movementPolygon(z),j=z.yard;
   if(z.id==='pond'){
-    const center=poly.reduce((a,p)=>[a[0]+p[0]/poly.length,a[1]+p[1]/poly.length],[0,0]);
-    const a=t/6500+phase+slot.index*Math.PI/2;
-    return {...project(center[0]+Math.sin(a)*j.rx*.8,center[1]+Math.cos(a)*j.ry*.8,poly),flip:Math.cos(a)<0,paused:false};
+    return {...project(slot.cx,slot.cy,poly),flip:false,paused:false};
   }
   return {x:slot.cx,y:slot.cy+Math.sin(t/650+phase)*.8,flip:false,paused};
 }
@@ -94,10 +92,10 @@ export function animalBubbles(views,t=0) {
   }));
   // Lift reminders above nearby sprites too, then stack any colliding reminders upward.
   // Moving only upward preserves clearance from each reminder's own animal.
-  const halfWidth=v=>(v.zoneId==='pond'?44:v.kind==='cow'?49.5:v.kind==='chicken'?23:41.5)*SCALE;
+  const halfWidth=v=>(v.zoneId==='pond'?44:v.kind==='cow'?49.5:v.kind==='chicken'?36:41.5)*SCALE;
   for(const b of bubbles){
     for(const v of views.filter(v=>v.status!=='empty')){
-      if(v.zoneId===b.zoneId && Math.abs(b.x-v.x)<b.r+halfWidth(v))b.y=Math.min(b.y,v.y-(v.zoneId==='pond'?28:92)*SCALE-43);
+      if(v.zoneId===b.zoneId && Math.abs(b.x-v.x)<b.r+halfWidth(v))b.y=Math.min(b.y,v.y-(v.zoneId==='pond'?28:v.kind==='chicken'?100:92)*SCALE-43);
     }
   }
   const placed=[];
@@ -119,13 +117,17 @@ function drawAnimalBubble(ctx,b) {
   ctx.beginPath();ctx.arc(b.x,b.y,b.r-4,0,Math.PI*2);ctx.stroke();
   drawSprite(ctx,b.icon,b.x-17,b.y-17,34,34);ctx.restore();
 }
+export function animalSize(kind,fish=false) {
+  return {width:(fish?88:kind==='chicken'?72:kind==='cow'?99:83)*SCALE,
+    height:(fish?88*.6:kind==='chicken'?100:92)*SCALE};
+}
 function animal(ctx,v,t) {
   const fish=v.zoneId==='pond',frame=fish?Math.floor(t/450)%2:v.paused?1:0;
-  const width=(fish?88:v.kind==='chicken'?46:v.kind==='cow'?99:83)*SCALE;
+  const {width,height}=animalSize(v.kind,fish);
   ctx.save();ctx.translate(v.x,v.y+(fish?Math.sin(t/350+v.index)*1.5*SCALE:0));ctx.scale(v.flip?-1:1,1);
   const path=`animals/${v.kind}-${frame}.webp`;
   if(fish)drawSprite(ctx,path,-width/2,-width*.3,width,width*.6);
-  else drawAnchored(ctx,path,0,0,width,92*SCALE);
+  else drawAnchored(ctx,path,0,0,width,height);
   ctx.restore();
 }
 export function drawLivestock(ctx,state,layout,t,now) {
@@ -135,8 +137,8 @@ export function drawLivestock(ctx,state,layout,t,now) {
   for(const b of animalBubbles(views,t))drawAnimalBubble(ctx,b);
   for(const s of MAP_LAYOUT.SIGNS){
     ctx.save();ctx.translate(s.x+s.w/2,s.y+s.h/2);ctx.rotate((s.angle||0)*Math.PI/180);
-    let size=s.h*.82;ctx.font=`700 ${size}px FarmSign`;
-    while(ctx.measureText(s.text).width>s.w*.84 && size>1){size--;ctx.font=`700 ${size}px FarmSign`;}
+    let size=Math.max(10,s.h*.70);ctx.font=`700 ${size}px FarmSign`;
+    while(ctx.measureText(s.text).width>s.w*.76 && size>10){size--;ctx.font=`700 ${size}px FarmSign`;}
     ctx.fillStyle='#5a3a1a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s.text,0,0);ctx.restore();
   }
   return views;
