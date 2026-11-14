@@ -1,4 +1,5 @@
-import { GAME, CROPS, ANIMALS, PRODUCTS, PEN_SIZES } from './config.js';
+import { ensureMarket } from './systems/market.js';
+import { GAME, CROPS, ANIMALS, PRODUCTS, PEN_ZONES } from './config.js';
 
 function emptyCounts() {
   const counts = {};
@@ -13,7 +14,7 @@ export function plotCount() {
 export function createInitialState(now = Date.now()) {
   const seeds = emptyCounts();
   Object.assign(seeds, GAME.startSeeds);
-  return {
+  const state = {
     version: GAME.version,
     coins: GAME.startCoins,
     xp: 0,
@@ -21,7 +22,7 @@ export function createInitialState(now = Date.now()) {
     seeds,
     inventory: { ...emptyCounts(), ...Object.fromEntries(Object.keys(PRODUCTS).map(k=>[k,0])), feed: 2 },
     stock: Object.fromEntries(Object.keys(ANIMALS).map(k=>[k,0])),
-    pens: Object.fromEntries(Object.entries(PEN_SIZES).map(([k,n])=>[k,Array(n).fill(null)])),
+    pens: Object.fromEntries(PEN_ZONES.map(k=>[k,Array(8).fill(null)])),
     plots: Array.from({ length: plotCount() }, () => ({
       cropId: null,
       plantedAt: 0,
@@ -31,6 +32,8 @@ export function createInitialState(now = Date.now()) {
     createdAt: now,
     updatedAt: now,
   };
+  ensureMarket(state,now);
+  return state;
 }
 
 /** 兼容旧存档，补齐新增字段 */
@@ -59,8 +62,8 @@ export function normalizeState(raw, now = Date.now()) {
 
   state.stock = { ...base.stock, ...(raw.stock || {}) };
   state.inventory.feed = raw.inventory?.feed ?? 0;
-  state.pens = Object.fromEntries(Object.entries(PEN_SIZES).map(([zone,n]) => [zone,
-    Array.from({length:n}, (_,i) => {
+  state.pens = Object.fromEntries(PEN_ZONES.map(zone => [zone,
+    Array.from({length:8}, (_,i) => {
       const o = raw.pens?.[zone]?.[i];
       return o && ANIMALS[o.kind]?.zone === zone ? {
         id: String(o.id || `${zone}-${i}-${now}`), kind:o.kind,
@@ -70,6 +73,7 @@ export function normalizeState(raw, now = Date.now()) {
     })]));
   for (const counts of [state.stock,state.inventory]) for (const k of Object.keys(counts))
     counts[k] = Math.max(0,Math.floor(Number(counts[k]) || 0));
+  ensureMarket(state,now);
   state.version = GAME.version;
   state.coins = Math.max(0, Math.floor(Number(state.coins) || 0));
   state.xp = Math.max(0, Math.floor(Number(state.xp) || 0));

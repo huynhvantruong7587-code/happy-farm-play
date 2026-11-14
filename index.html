@@ -45,6 +45,7 @@
     </main>
 
     <nav class="zone-actions" aria-label="区域跳转">
+      <button class="zone-jump" data-zone="market" aria-label="前往集市">🧺<span>集市</span></button>
       <button class="zone-jump" data-zone="house" aria-label="前往小屋">🏠<span>小屋</span></button>
       <button class="zone-jump" data-zone="mill" aria-label="前往加工厂">⚙️<span>加工厂</span></button>
       <button class="zone-jump" data-zone="farm" aria-label="前往农田">🌾<span>农田</span></button>
@@ -73,9 +74,9 @@
       <header class="sheet-head">
         <button type="button" class="sheet-close" aria-label="关闭面板">×</button>
         <h2>仓库</h2>
-        <p>把收获的作物、畜产品和鱼肉卖掉，换取金币</p>
+        <p>保存收获的作物、畜产品和鱼肉，前往集市交易</p>
       </header>
-      <p id="bag-empty" class="empty-hint">仓库暂无可出售产品，去农田、围栏或鱼塘收获吧</p>
+      <p id="bag-empty" class="empty-hint">仓库暂无产品，去农田、围栏或鱼塘收获吧</p>
       <div id="bag-list" class="card-list"></div>
     </section>
 
@@ -88,12 +89,12 @@
       <div class="more-block">
         <h3>怎么玩</h3>
         <ol class="howto">
-          <li>在商店购买种子，或使用开场赠送的小麦和白菜种子。</li>
+          <li>在商店购买种子和幼畜，仓库保存收获，集市出售产品。</li>
           <li>点击农田展开种子栏，选中种子后点地块种植；点击空地收起。</li>
           <li>作物按真实时间生长，关掉页面也会继续成熟。</li>
-          <li>成熟后点击地块收获，打开仓库出售换金币。</li>
+          <li>成熟后点击地块收获，前往集市卖给客人换金币。</li>
           <li>收获获得经验，升级后逐步解锁更多作物。</li>
-          <li>购买幼畜或鱼苗，点击对应院落，在气泡中放入。</li>
+          <li>购买幼畜或鱼苗，点击对应院落，在面板中放入。</li>
           <li>点击院落气泡里的「喂饲料」，喂食后开始计时，离线继续。</li>
           <li>就绪后在气泡中收获；羊可反复剪毛，小鸡可反复产蛋，每轮重新喂食。「收羊肉」「收鸡肉」会移除对应动物。</li>
           <li>饲料可购买，也可用仓库小麦×2或玉米×1制作。左侧按钮可快捷跳转。</li>
@@ -129,9 +130,9 @@
         <h2>饲料加工厂</h2>
         <p id="mill-inventory"></p>
         <p>小麦×2 → 饲料×1</p>
-        <button type="button" class="btn btn-buy" data-mill-material="wheat">用小麦制作</button>
+        <button type="button" class="btn btn-buy" data-mill-material="wheat">制作</button>
         <p>玉米×1 → 饲料×1</p>
-        <button type="button" class="btn btn-buy" data-mill-material="corn">用玉米制作</button>
+        <button type="button" class="btn btn-buy" data-mill-material="corn">制作</button>
         <button type="button" id="btn-close-mill" class="btn">关闭</button>
       </div>
     </div>

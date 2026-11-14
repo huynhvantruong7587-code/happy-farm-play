@@ -1,4 +1,4 @@
-import { makeZones, drawLivestock, emptySign, nameSign, walkPolygon } from './livestockView.js';
+import { makeZones, drawLivestock, walkPolygon } from './livestockView.js';
 import { drawAnchored } from './assets.js';
 import { drawScenery } from './scenery.js';
 import { formatMs } from '../game/config.js';
@@ -25,7 +25,7 @@ export function zoneBounds(layout, id) {
   const z=layout.zones.find(z=>z.id===id);
   if (!z) return null;
   const b=z.bounds;
-  const boxes=[b,emptySign(z,.45),nameSign(z,.45)].filter(Boolean),x=Math.min(...boxes.map(b=>b.x))-20,y=Math.min(...boxes.map(b=>b.y))-20;
+  const boxes=[b,...MAP_LAYOUT.SIGNS.filter(s=>s.id===id)].filter(Boolean),x=Math.min(...boxes.map(b=>b.x))-20,y=Math.min(...boxes.map(b=>b.y))-20;
   return {x,y,w:Math.max(...boxes.map(b=>b.x+b.w))-x+20,h:Math.max(...boxes.map(b=>b.y+b.h))-y+20};
 }
 function fitCamera(layout,b,left=12,right=12) {

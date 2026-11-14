@@ -1,4 +1,4 @@
-import { ANIMALS, FEED, PEN_SIZES } from '../config.js';
+import { ANIMALS, FEED, slotCount } from '../config.js';
 const fail = reason => ({ok:false,reason});
 const count = n => Number.isFinite(n) && n > 0 && Number.isInteger(n);
 export function buyYoung(state, kind, n=1) {
@@ -21,7 +21,7 @@ export function craftFeed(state,material) {
   if ((state.inventory[material]||0)<n) return fail('no_material');
   state.inventory[material]-=n; state.inventory.feed++; return {ok:true};
 }
-function valid(state,z,i) { return PEN_SIZES[z] && Number.isInteger(i) && i>=0 && i<state.pens[z].length; }
+function valid(state,z,i) { return state.pens[z] && Number.isInteger(i) && i>=0 && i<Math.min(state.pens[z].length,slotCount(state.level)); }
 export function place(state,z,i,kind,now=Date.now()) {
   if (!valid(state,z,i) || !ANIMALS[kind]) return fail('invalid');
   if (ANIMALS[kind].zone!==z) return fail('wrong_zone');

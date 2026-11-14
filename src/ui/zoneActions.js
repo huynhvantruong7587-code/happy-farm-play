@@ -1,11 +1,12 @@
-import { ANIMALS } from '../game/config.js';
+import { ANIMALS, slotCount } from '../game/config.js';
 import { getOccupantView } from '../game/systems/livestock.js';
 export function zoneActions(state,id,now=Date.now()) {
   const slots=state.pens[id];
   if(!slots)return null;
-  const views=slots.map(o=>getOccupantView(o,now));
+  const available=slots.slice(0,slotCount(state.level));
+  const views=available.map(o=>getOccupantView(o,now));
   return {young:Object.values(ANIMALS).filter(a=>a.zone===id&&state.stock[a.id]>0),
-    empty:slots.every(o=>!o), free:slots.findIndex(o=>!o),
+    empty:slots.every(o=>!o), free:available.findIndex(o=>!o),
     hungry:views.flatMap((v,i)=>v.status==='hungry'?[i]:[]),
     ready:views.flatMap((v,i)=>v.status==='ready'?[i]:[]),
     chicken:id==='chicken'?slots.flatMap((o,i)=>o?[i]:[]):[],

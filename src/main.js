@@ -1,14 +1,15 @@
+import { tickMarket, sellToCustomer } from './game/systems/market.js';
 import { loadAssets } from './render/assets.js';
 let assetsSettled = false;
 loadAssets(value => { document.getElementById('loading-progress').style.width = `${value*100}%`; }).then(() => { assetsSettled = true; });
 import * as livestock from './game/systems/livestock.js';
-import { emptySign, livestockViews, animalBubbles, hitTestAnimalBubble, hitTestLivestock, hitTestZone, hitTestEmptySign } from './render/livestockView.js';
+import { livestockViews, animalBubbles, hitTestAnimalBubble, hitTestLivestock, hitTestZone } from './render/livestockView.js';
 import { mapInput, canvasInput, isPortraitRotated, bindLandscape } from './ui/inputMap.js';
-import { CROPS, GAME, ANIMALS, PRODUCTS, ZONE_NAMES, formatMs } from './game/config.js';
+import { CROPS, GAME, ANIMALS, PRODUCTS, ZONE_NAMES, formatMs, slotCount, slotUnlockLevel } from './game/config.js';
 import { createInitialState } from './game/state.js';
 import { loadState, saveState, bindAutoSave, clearSave } from './game/save.js';
 import { plant, harvest, getPlotView, forceRipe } from './game/systems/farm.js';
-import { buySeed, sellCrop } from './game/systems/economy.js';
+import { buySeed } from './game/systems/economy.js';
 import { addXp } from './game/systems/progression.js';
 import { createRenderer } from './render/canvas.js';
 import { computeLayout, hitTestPlot, clampCamera, homeCamera, cameraForZone, interpolateCamera, WORLD, drawFarm } from './render/farmView.js';
@@ -36,6 +37,7 @@ function renderMill(){
 }
 function openZone(id){
   setSeedTray(false);
+  if(id==='market'){switchTab('farm');openZoneId=id;renderZone();return true;}
   if(id==='shop'){switchTab('bag');return true;}
   if(id==='house'){closeZone();closeMill();toast('暂未开放');return true;}
   if(id==='mill'){switchTab('farm');renderMill();millPanel.classList.remove('hidden');app.classList.add('mill-open');return true;}
@@ -43,30 +45,47 @@ function openZone(id){
 function renderZone(){
   if(!openZoneId)return;
   const id=openZoneId;
+  document.getElementById('animal-slots').classList.remove('market-slots');
   bubble.hidden=false;
   const content=document.getElementById('animal-slots');content.replaceChildren();
-  document.getElementById('animal-title').textContent=ZONE_NAMES[id];
+  document.getElementById('animal-title').textContent=ZONE_NAMES[id]+(state.pens[id]?` · ${state.pens[id].filter(Boolean).length} 只`:'');
+  if(id==='market'){renderMarket(content);return;}
   const kinds=Object.values(ANIMALS).filter(a=>a.zone===id);
   const productIds=[...new Set([...kinds.flatMap(a=>Object.keys(a.outputs)),...(id==='chicken'?['chickenMeat']:id==='sheep'?['mutton']:[])])];
   document.getElementById('animal-inventory').textContent='已积累：'+productIds.map(k=>`${PRODUCTS[k].name}×${state.inventory[k]}`).join(' · ')+` · 饲料×${state.inventory.feed}`;
   state.pens[id].forEach((o,i)=>{
     const v=livestock.getOccupantView(o),row=document.createElement('article');row.className='animal-slot';
-    const label=document.createElement('p');
-    const output=Object.entries(v.outputs).map(([k,n])=>`${PRODUCTS[k].name}×${n}`).join('、');
-    label.textContent=`栏位 ${i+1} · `+(v.status==='empty'?'空栏':`${v.animal.emoji} ${v.animal.name} · `+({hungry:'饥饿',growing:`生产中 ${formatMs(v.remainingMs)}`,ready:`待收取 ${output}`}[v.status]));row.append(label);
+    if(i>=slotCount(state.level)){
+      row.classList.add('is-locked');row.innerHTML=`<p>🔒</p><p>Lv.${slotUnlockLevel(i)} 解锁</p>`;content.append(row);return;
+    }
     const button=(text,action,disabled=false)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.disabled=disabled;b.onclick=action;row.append(b);};
     if(!o){
-      for(const young of kinds)button(`放入幼崽 · ${young.name}（库存 ${state.stock[young.id]}${state.stock[young.id]?'':` · 购买 ${young.cost} 金币`}）`,()=>{
-        if(!state.stock[young.id]&&!runLivestock('buyYoung',young.id).ok)return;
-        runLivestock('place',id,i,young.id);
-      },state.level<young.unlockLevel);
+      const young=kinds.find(a=>state.stock[a.id]>0)||kinds.find(a=>state.level>=a.unlockLevel)||kinds[0];
+      row.innerHTML=`<p>空栏 · ${i+1}</p><p>${young.name} · ${young.cost} 金币</p><small>库存 ${state.stock[young.id]}</small>`;
+      button('购买',()=>{if(state.stock[young.id]>0)runLivestock('place',id,i,young.id);else {switchTab('shop');document.getElementById('shop-young').scrollIntoView({block:'start'});}},state.level<young.unlockLevel);
     }else{
-      if(v.status!=='ready'){const pending=document.createElement('small');pending.textContent='本轮产出：'+output;row.append(pending);}
-      button('喂食',()=>runLivestock('feed',id,i),v.status!=='hungry');
-      button('收取',()=>runLivestock('harvest',id,i),v.status!=='ready');
-      if(id==='chicken'||id==='sheep')button('出售 · '+(id==='chicken'?'鸡肉':'羊肉')+'入库',()=>runLivestock(id==='chicken'?'harvestChicken':'harvestMutton',i));
+      const output=Object.entries(v.outputs).map(([k,n])=>`${PRODUCTS[k].name}×${n}`).join('、');
+      row.innerHTML=`<img class="slot-sprite" src="assets/animals/${o.kind}-0.webp" alt="${v.animal.name}"><p>${v.animal.name} · ${{hungry:'🥣 饥饿',growing:formatMs(v.remainingMs),ready:'✨ 待收取'}[v.status]}</p><small>${output}</small>${v.status==='growing'?`<progress max="1" value="${v.progress}"></progress>`:''}`;
+      button(v.status==='ready'?'收取':'喂食',()=>runLivestock(v.status==='ready'?'harvest':'feed',id,i),v.status==='growing');
+      if(id==='chicken'||id==='sheep')button('出售',()=>runLivestock(id==='chicken'?'harvestChicken':'harvestMutton',i));
     }
     content.append(row);
+  });
+}
+
+function renderMarket(content){
+  document.getElementById('animal-inventory').textContent='收获带到集市，卖给需要它的客人';
+  content.classList.add('market-slots');
+  state.market.customers.forEach((c,i)=>{
+    const card=document.createElement('article');card.className='animal-slot customer-card';
+    if(!c)card.innerHTML='<p>客人在路上…</p>';
+    else {
+      const item=CROPS[c.wantId]||PRODUCTS[c.wantId];
+      card.innerHTML=`<img class="customer-sprite" src="assets/market/${c.variant}.webp" alt="客人"><p>${c.generous?'✨ 豪客':''}</p><p>${item.emoji} ${item.name} ×${c.qty}</p><p>🪙 ${c.offer} 金币</p>`;
+      const b=document.createElement('button');b.textContent='卖给他';b.disabled=(state.inventory[c.wantId]||0)<c.qty;
+      b.onclick=()=>{const r=sellToCustomer(state,i);if(r.ok){toast(`成交！金币 +${r.coins}`);const coin=document.getElementById('hud-coins')||document.querySelector('.hud');coin?.animate([{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:450});persist();refreshUI();}};card.append(b);
+    }
+    content.append(card);
   });
 }
 
@@ -91,7 +110,7 @@ function refreshUI() {
   renderZone();
   renderSeedTray(state, selectedSeed, { onSelect: selectSeed });
   if (activeTab === 'shop') renderShop(state, { onBuy: handleBuy, onYoung: k=>runLivestock('buyYoung',k), onFeed:()=>runLivestock('buyFeed'), onCraft:m=>runLivestock('craftFeed',m) });
-  if (activeTab === 'bag') renderBag(state, { onSell: handleSell });
+  if (activeTab === 'bag') renderBag(state);
 }
 
 function persist() {
@@ -168,18 +187,6 @@ function handleBuy(cropId) {
   refreshUI();
 }
 
-function handleSell(cropId, count) {
-  const result = sellCrop(state, cropId, count);
-  if (!result.ok) {
-    toast('仓库里没有这么多');
-    refreshUI();
-    return;
-  }
-  toast(`出售 ${result.crop.name} ×${result.count}，获得 ${result.gold} 金币`);
-  persist();
-  refreshUI();
-}
-
 function switchTab(tab) {
   closeZone();
   closeMill();
@@ -215,7 +222,7 @@ function tap(x, y) {
   if (activeTab !== 'farm') { switchTab('farm'); return; }
   const animalBubble=hitTestAnimalBubble(x,y,layout,animalBubbles(drawnLivestock,lastAnimationNow));
   const animal=hitTestLivestock(x,y,layout,drawnLivestock);
-  const target=animalBubble?.zoneId || animal?.zoneId || hitTestEmptySign(x,y,layout,state)?.id || hitTestZone(x,y,layout)?.id;
+  const target=animalBubble?.zoneId || animal?.zoneId || hitTestZone(x,y,layout)?.id;
   if(target){openZone(target);return;}
   const hit=hitTestPlot(x,y,layout);
   if(!hit){setSeedTray(false);return;}
@@ -227,6 +234,7 @@ function tap(x, y) {
 }
 
 function frame(animationNow) {
+  if(tickMarket(state)){persist();if(openZoneId==='market')renderZone();}
   lastAnimationNow=animationNow;
   renderer.resize();
   const { cssW, cssH } = renderer.size;
@@ -249,7 +257,7 @@ function frame(animationNow) {
     now: Date.now(), animationNow, selectedSeed, hoveredIndex, debugOverlay,
   });
   effects.draw(renderer.ctx, layout, animationNow, canvas, document.getElementById('warehouse-button'));
-  if(openZoneId){const key=JSON.stringify(state.pens[openZoneId].map(o=>{const v=livestock.getOccupantView(o);return [v.status,Math.ceil(v.remainingMs/1000)];}));if(bubble.dataset.status!==key){bubble.dataset.status=key;renderZone();}}
+  if(openZoneId && state.pens[openZoneId]){const key=JSON.stringify(state.pens[openZoneId].map(o=>{const v=livestock.getOccupantView(o);return [v.status,Math.ceil(v.remainingMs/1000)];}));if(bubble.dataset.status!==key){bubble.dataset.status=key;renderZone();}}
   finishLoading();
   requestAnimationFrame(frame);
 }
@@ -325,7 +333,7 @@ function bindUi() {
   const endDrag=()=>{drag=null;};tray.addEventListener('pointerup',endDrag);tray.addEventListener('pointercancel',endDrag);
   tray.addEventListener('click',e=>{if(suppress){e.preventDefault();e.stopImmediatePropagation();suppress=false;}},true);
 
-  document.querySelectorAll('.zone-jump').forEach(btn=>btn.onclick=()=>jumpTo(btn.dataset.zone));
+  document.querySelectorAll('.zone-jump').forEach(btn=>btn.onclick=()=>btn.dataset.zone==='market'?openZone('market'):jumpTo(btn.dataset.zone));
   document.querySelectorAll('.tab').forEach((btn) => {
     btn.addEventListener('click', () => switchTab(activeTab === btn.dataset.tab ? 'farm' : btn.dataset.tab));
   });
@@ -384,7 +392,6 @@ function exposeDebug() {
     harvestChicken:i=>runLivestock('harvestChicken',i),
     harvestMutton:i=>runLivestock('harvestMutton',i),
     jumpTo,openZone,setSeedTray,setChrome,
-    emptySign,
     setDebugOverlay: flags => {for(const key of ['plots','walk'])if(key in flags)debugOverlay[key]=!!flags[key];return {...debugOverlay};},
     getDebugOverlay:()=>({...debugOverlay}),
     getUI:()=>({trayOpen,chromeVisible,openZone:openZoneId}),
@@ -409,7 +416,6 @@ function exposeDebug() {
       return r;
     },
     buy: (id, n = 1) => { const r = buySeed(state, id, n); persist(); refreshUI(); return r; },
-    sell: (id, n = 1) => handleSell(id, n),
     switchTab,
     reset: () => {
       closeZone();setSeedTray(false);setChrome(true);
@@ -432,7 +438,7 @@ refreshUI();
 exposeDebug();
 
 document.getElementById('version-label').textContent = `版本 ${GAME.version}.0`;
-requestAnimationFrame(frame);
+document.fonts.load('700 32px FarmSign').then(()=>requestAnimationFrame(frame));
 
 let loadingFinished = false;
 function finishLoading() {

@@ -85,11 +85,11 @@ export function getImage(path) {
   const img=images.get(path);
   return img?.complete && img.naturalWidth ? img : null;
 }
-// A missing image leaves a quiet placeholder and never interrupts the frame.
+// A missing image draws nothing and never interrupts the frame.
 export function drawSprite(ctx,path,x,y,w,h) {
   const img=getImage(path);
   if (img) ctx.drawImage(img,x,y,w,h);
-  else {ctx.fillStyle='#c0ce9b';ctx.beginPath();ctx.ellipse(x+w/2,y+h*.7,w*.42,h*.25,0,0,Math.PI*2);ctx.fill();}
+  else { /* Missing sprites draw nothing. */ }
 }
 export function drawAnchored(ctx,path,x,y,w,maxH=w*2) {
   const img=getImage(path), ratio=img?img.naturalHeight/img.naturalWidth:1;

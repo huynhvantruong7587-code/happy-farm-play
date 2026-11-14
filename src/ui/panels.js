@@ -19,7 +19,7 @@ export function renderShop(state, { onBuy, onYoung, onFeed, onCraft }) {
       <div class="card-body">
         <h3>${crop.name}</h3>
         <p class="meta">种子 ${crop.seedCost} 金币 · 生长 ${formatGrowTime(crop.growMs)}</p>
-        <p class="meta">售价 ${crop.sellPrice} 金币 · 经验 +${crop.xp}</p>
+        <p class="meta">收获经验 +${crop.xp}</p>
         <p class="owned">拥有种子：${state.seeds[crop.id] || 0}</p>
         ${locked ? `<p class="lock">🔒 ${crop.unlockLevel} 级解锁</p>` : ''}
       </div>
@@ -51,7 +51,7 @@ export function renderShop(state, { onBuy, onYoung, onFeed, onCraft }) {
 
 }
 
-export function renderBag(state, { onSell }) {
+export function renderBag(state) {
   const list = document.getElementById('bag-list');
   const empty = document.getElementById('bag-empty');
   if (!list) return;
@@ -67,16 +67,9 @@ export function renderBag(state, { onSell }) {
       <div class="card-body">
         <h3>${crop.name} × ${count}</h3>
         <p class="meta">单价 ${crop.sellPrice} 金币</p>
-        <p class="meta">全部出售可获得 ${crop.sellPrice * count} 金币</p>
-      </div>
-      <div class="btn-col">
-        <button class="btn btn-sell" data-id="${crop.id}" data-count="1">出售 1</button>
-        <button class="btn btn-sell-all" data-id="${crop.id}" data-count="${count}">全部出售</button>
+        <p class="meta">带到集市与客人交易</p>
       </div>
     `;
-    card.querySelectorAll('button').forEach((btn) => {
-      btn.addEventListener('click', () => onSell(crop.id, Number(btn.dataset.count)));
-    });
     list.appendChild(card);
   }
 }

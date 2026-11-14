@@ -1,4 +1,4 @@
-import { ZONE_NAMES, PEN_SIZES } from '../game/config.js';
+import { ZONE_NAMES } from '../game/config.js';
 import { getOccupantView } from '../game/systems/livestock.js';
 import { drawAnchored, drawSprite } from './assets.js';
 import { fillRoundRect as rect, drawText } from './draw.js';
@@ -54,31 +54,15 @@ export function makeZones() {
     const center=poly.reduce((a,p)=>[a[0]+p[0]/poly.length,a[1]+p[1]/poly.length],[0,0]);
     const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);
     z.yard={rx:(Math.max(...xs)-Math.min(...xs))/2,ry:(Math.max(...ys)-Math.min(...ys))/2};
-    z.slots=Array.from({length:PEN_SIZES[z.id]},(_,index)=>({index,
-      cx:center[0]*.55+poly[Math.floor(index*poly.length/PEN_SIZES[z.id])][0]*.45,
-      cy:center[1]*.55+poly[Math.floor(index*poly.length/PEN_SIZES[z.id])][1]*.45}));
     return z;
   });
 }
 export function zonePolygon(z) {return z.hit;}
 export function pointInZone(x,y,z) {return inside(x,y,z.hit);}
 function polygonArea(poly) {return Math.abs(poly.reduce((sum,[x,y],i)=>{const [nx,ny]=poly[(i+1)%poly.length];return sum+x*ny-y*nx;},0))/2;}
-function signBox(z, attachment, text, zoom) {
-  const p=zoneAttachment(z,attachment);
-  if(!p)return null;
-  const font=Math.min(Math.max(28,13/zoom),26/zoom);
-  const w=text.length*font*.95+18,h=font*1.85;
-  return {x:p.x-w/2,y:p.y-h/2,w,h,font};
-}
-export function emptySign(z, zoom=1) {return signBox(z,'empty',z.id==='pond'?'去买鱼苗':'去买幼崽',zoom);}
-export function nameSign(z, zoom=1) {return signBox(z,'name',z.label,zoom);}
 export function hitTestZone(x,y,layout) {
   const c=layout.camera;x=(x-c.x)/c.zoom;y=(y-c.y)/c.zoom;
   return layout.zones.filter(z=>pointInZone(x,y,z)).sort((a,b)=>polygonArea(a.hit)-polygonArea(b.hit))[0]||null;
-}
-export function hitTestEmptySign(x,y,layout,state) {
-  const c=layout.camera;x=(x-c.x)/c.zoom;y=(y-c.y)/c.zoom;
-  return layout.zones.find(z=>{const b=emptySign(z,c.zoom);return b && state.pens[z.id]?.every(o=>!o)&&x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h;})||null;
 }
 export function occupantPosition(o,z,slot,t) {
   let seed=0;for(const c of o.id)seed=(seed*31+c.charCodeAt(0))>>>0;
@@ -92,7 +76,9 @@ export function occupantPosition(o,z,slot,t) {
   return {x:slot.cx,y:slot.cy+Math.sin(t/650+phase)*.8,flip:false,paused};
 }
 export function livestockViews(state,layout,t,now=Date.now()) {
-  return layout.zones.filter(z=>z.walk && state.pens[z.id]).flatMap(z=>z.slots.map(s=>{const o=state.pens[z.id][s.index];return {zoneId:z.id,index:s.index,...getOccupantView(o,now),...(o?occupantPosition(o,z,s,t):{x:s.cx,y:s.cy})};}));
+  return layout.zones.filter(z=>z.walk && state.pens[z.id]).flatMap(z=>state.pens[z.id]
+    .map((o,index)=>({o,index})).filter(v=>v.o).slice(0,4).map(({o,index},visual)=>({zoneId:z.id,index,
+      ...getOccupantView(o,now),...occupantPosition(o,z,z.slots[visual],t)})));
 }
 export function hitTestLivestock(x,y,layout,views) {
   const c=layout.camera;x=(x-c.x)/c.zoom;y=(y-c.y)/c.zoom;
@@ -147,12 +133,11 @@ export function drawLivestock(ctx,state,layout,t,now) {
   for(const v of views.filter(v=>v.status!=='empty').sort((a,b)=>a.y-b.y))animal(ctx,v,t);
   for(const front of Object.values(MAP_LAYOUT.FRONTS))drawSprite(ctx,front.file,front.x,front.y,front.w,front.h);
   for(const b of animalBubbles(views,t))drawAnimalBubble(ctx,b);
-  for(const z of layout.zones){
-    for(const [s,text] of [[nameSign(z,layout.camera.zoom),z.label],...(state.pens[z.id]?.every(o=>!o)?[[emptySign(z,layout.camera.zoom),z.id==='pond'?'去买鱼苗':'去买幼崽']]:[])]) {
-      rect(ctx,s.x,s.y,s.w,s.h,4,'#8a5a32');
-      rect(ctx,s.x+2,s.y+2,s.w-4,s.h-4,3,'#f3e0b0');
-      drawText(ctx,text,s.x+s.w/2,s.y+s.h/2,{size:s.font,color:'#5a3a22',weight:'800'});
-    }
+  for(const s of MAP_LAYOUT.SIGNS){
+    ctx.save();ctx.translate(s.x+s.w/2,s.y+s.h/2);ctx.rotate((s.angle||0)*Math.PI/180);
+    let size=s.h*.82;ctx.font=`700 ${size}px FarmSign`;
+    while(ctx.measureText(s.text).width>s.w*.84 && size>1){size--;ctx.font=`700 ${size}px FarmSign`;}
+    ctx.fillStyle='#5a3a1a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s.text,0,0);ctx.restore();
   }
   return views;
 }
