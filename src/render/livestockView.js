@@ -80,28 +80,68 @@ export function livestockViews(state,layout,t,now=Date.now()) {
 }
 export function hitTestLivestock(x,y,layout,views) {
   const c=layout.camera;x=(x-c.x)/c.zoom;y=(y-c.y)/c.zoom;
-  return [...views].filter(v=>v.status!=='empty').sort((a,b)=>b.y-a.y).find(v=>Math.hypot(x-v.x,y-(v.y-(v.zoneId==='pond'?0:35)))<55)||null;
+  return [...views].filter(v=>v.status!=='empty').sort((a,b)=>b.y-a.y).find(v=>{const {width,height}=animalSize(v.kind,v.zoneId==='pond');return Math.abs(x-v.x)<=width/2 && y>=v.y-(v.zoneId==='pond'?height/2:height) && y<=v.y+(v.zoneId==='pond'?height/2:0);})||null;
 }
+// Yard candidates are static; avoid scanning the map again on every animation frame.
+const reminderYards=new Map();
 // Shared world-space geometry keeps drawing and rotated-canvas input aligned.
 export function animalBubbles(views,t=0) {
   const icons={chicken:'egg',sheep:'wool',pig:'pork',cow:'beef'};
-  const bubbles=views.filter(v=>v.status==='ready').map(v=>({
-    zoneId:v.zoneId,index:v.index,action:'open-zone',
-    icon:`icons/${v.zoneId==='pond'?'fish':icons[v.kind]}.webp`,
-    x:v.x,y:v.y-(v.zoneId==='pond'?90:v.kind==='chicken'?150:165)*SCALE+Math.sin(t/650+v.index)*2,r:27,
-  }));
-  // Lift reminders above nearby sprites too, then stack any colliding reminders upward.
-  // Moving only upward preserves clearance from each reminder's own animal.
-  const halfWidth=v=>(v.zoneId==='pond'?44:v.kind==='cow'?49.5:v.kind==='chicken'?36:41.5)*SCALE;
-  for(const b of bubbles){
-    for(const v of views.filter(v=>v.status!=='empty')){
-      if(v.zoneId===b.zoneId && Math.abs(b.x-v.x)<b.r+halfWidth(v))b.y=Math.min(b.y,v.y-(v.zoneId==='pond'?28:v.kind==='chicken'?100:92)*SCALE-43);
+  const bubbles=[];
+  const overlaps=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r+6;
+  for(const zoneId of new Set(views.map(v=>v.zoneId))){
+    const ready=views.filter(v=>v.zoneId===zoneId && v.status==='ready');
+    if(!ready.length)continue;
+    const zone=MAP_LAYOUT.ZONES[zoneId],r=27;
+    // Keeping the whole reminder inside the walkable yard excludes roofs and walls.
+    const inYard=b=>!zone || Array.from({length:16},(_,i)=>{
+      const angle=i*Math.PI/8;
+      return inside(b.x+Math.cos(angle)*(r+6),b.y+Math.sin(angle)*(r+6),zone.walk);
+    }).every(Boolean);
+    const placed=[];
+    for(const v of ready){
+      const {height}=animalSize(v.kind,zoneId==='pond');
+      const base={zoneId,index:v.index,action:'open-zone',count:1,
+        icon:`icons/${zoneId==='pond'?'fish':icons[v.kind]}.webp`,
+        x:v.x,y:v.y-height*(zoneId==='pond'?.5:1)-r-12+Math.sin(t/650+v.index)*2,r,
+        targetX:v.x,targetY:v.y-height*(zoneId==='pond'?.5:1)};
+      let candidate=null;
+      for(const dy of [0,8,-8])for(const dx of [0,-20,20,-40,40]){
+        if(candidate)continue;
+        const b={...base,x:base.x+dx,y:base.y+dy};
+        const ownDistance=Math.hypot(b.x-base.targetX,b.y-base.targetY);
+        const associated=views.filter(a=>a.zoneId===zoneId && a.status!=='empty' && a.index!==v.index).every(a=>{
+          const size=animalSize(a.kind,zoneId==='pond');
+          return ownDistance<Math.hypot(b.x-a.x,b.y-(a.y-size.height*(zoneId==='pond'?.5:1)));
+        });
+        if(associated && inYard(b) && ![...bubbles,...placed].some(a=>overlaps(a,b)))candidate=b;
+      }
+      if(!candidate)break;
+      placed.push(candidate);
     }
-  }
-  const placed=[];
-  for(const b of bubbles.sort((a,b)=>a.y-b.y)){
-    while(placed.some(a=>Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r+3))b.y-=b.r*2+4;
-    placed.push(b);
+    if(placed.length===ready.length){bubbles.push(...placed);continue;}
+    // A single zone reminder belongs in the open yard, in front of the building.
+    const x=ready.reduce((n,v)=>n+v.x/ready.length,0),y=ready.reduce((n,v)=>n+v.y/ready.length,0)-45;
+    const b={zoneId,index:null,action:'open-zone',aggregated:true,count:ready.length,
+      icon:`icons/${zoneId==='pond'?'fish':icons[ready[0].kind]}.webp`,x,y,r,targetX:x,targetY:y+45};
+    if(!reminderYards.has(zoneId)){
+      const points=[];
+      for(let cy=zone.bounds.y;cy<=zone.bounds.y+zone.bounds.h;cy+=8){
+        for(let cx=zone.bounds.x;cx<=zone.bounds.x+zone.bounds.w;cx+=8){
+          if(inYard({x:cx,y:cy}))points.push({x:cx,y:cy});
+        }
+      }
+      reminderYards.set(zoneId,points);
+    }
+    let best=null,distance=Infinity;
+    for(const point of reminderYards.get(zoneId)){
+      const d=(point.x-x)**2+(point.y-y)**2;
+      if(d<distance){
+        const candidate={...b,...point};
+        if(!bubbles.some(a=>overlaps(a,candidate))){best=candidate;distance=d;}
+      }
+    }
+    const shown=best||b;shown.targetX=shown.x;shown.targetY=shown.y+45;bubbles.push(shown);
   }
   return bubbles;
 }
@@ -111,15 +151,21 @@ export function hitTestAnimalBubble(x,y,layout,bubbles) {
 }
 function drawAnimalBubble(ctx,b) {
   ctx.save();ctx.fillStyle='#f7e7c3';ctx.strokeStyle='#b38a58';ctx.lineWidth=2.5;
-  ctx.beginPath();ctx.moveTo(b.x-7,b.y+22);ctx.lineTo(b.x,b.y+35);ctx.lineTo(b.x+8,b.y+22);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(b.x-7,b.y+22);ctx.lineTo(b.x+Math.max(-35,Math.min(35,b.targetX-b.x)),b.y+35);ctx.lineTo(b.x+8,b.y+22);ctx.fill();ctx.stroke();
   ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();ctx.stroke();
   ctx.strokeStyle='rgba(255,250,228,.75)';ctx.lineWidth=1.5;
   ctx.beginPath();ctx.arc(b.x,b.y,b.r-4,0,Math.PI*2);ctx.stroke();
-  drawSprite(ctx,b.icon,b.x-17,b.y-17,34,34);ctx.restore();
+  drawSprite(ctx,b.icon,b.x-17,b.y-17,34,34);
+  if(b.aggregated){
+    rect(ctx,b.x+7,b.y+10,34,22,9,'#f7e7c3');
+    ctx.strokeStyle='#b38a58';ctx.stroke();
+    drawText(ctx,`×${b.count}`,b.x+24,b.y+21,{size:16,color:'#603c20',weight:'800'});
+  }
+  ctx.restore();
 }
 export function animalSize(kind,fish=false) {
-  return {width:(fish?88:kind==='chicken'?72:kind==='cow'?99:83)*SCALE,
-    height:(fish?88*.6:kind==='chicken'?100:92)*SCALE};
+  return {width:(fish?88:kind==='chicken'?72:kind==='cow'?150:83)*SCALE,
+    height:(fish?88*.6:kind==='chicken'?100:kind==='cow'?112:92)*SCALE};
 }
 function animal(ctx,v,t) {
   const fish=v.zoneId==='pond',frame=fish?Math.floor(t/450)%2:v.paused?1:0;
