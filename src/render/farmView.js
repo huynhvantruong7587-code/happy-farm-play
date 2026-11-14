@@ -1,4 +1,4 @@
-import { makeZones, drawLivestock } from './livestockView.js';
+import { makeZones, drawLivestock, emptySign, nameSign, walkPolygon } from './livestockView.js';
 import { drawAnchored, drawSprite, getImage } from './assets.js';
 import { drawScenery } from './scenery.js';
 import { GAME, formatMs } from '../game/config.js';
@@ -6,12 +6,8 @@ import { getPlotView } from '../game/systems/farm.js';
 import { fillRoundRect, drawText } from './draw.js';
 
 function soilAspect() {const img=getImage('tiles/soil.webp');return img?img.naturalHeight/img.naturalWidth:395/640;}
-function fieldBounds(plots) {
-  const boxes=plots.map(p=>({x:p.cx-p.w*.6,y:p.cy-39,w:p.w*1.2,h:p.w*1.2*soilAspect()}));
-  const x=Math.min(...boxes.map(b=>b.x))-8, y=Math.min(...boxes.map(b=>b.y))-8;
-  return {x,y,w:Math.max(...boxes.map(b=>b.x+b.w))-x+8,
-    h:Math.max(...boxes.map(b=>b.y+b.h))-y+8};
-}
+export const FIELD = {x:640.8,y:693,w:492.4,h:284.7225};
+export const PLOT_GRID = {originX:917.4788,originY:747.3326,sx:60.8268,sy:34.7071};
 
 export const WORLD = { w: 2200, h: 1900, minZoom: 0.35, maxZoom: 1.7 };
 export function clampCamera(camera, w, h) {
@@ -26,7 +22,7 @@ export function zoneBounds(layout, id) {
   if (id === 'farm') {
     const boxes=layout.plots.map(p=>({x:p.cx-p.w*.6,y:p.cy-100,
       w:p.w*1.2,h:Math.max(100+p.h/2+23,61+p.w*1.2*soilAspect())}));
-    boxes.push(fieldBounds(layout.plots));
+    boxes.push(FIELD);
     const x=Math.min(...boxes.map(b=>b.x))-20, y=Math.min(...boxes.map(b=>b.y))-20;
     return {x,y,w:Math.max(...boxes.map(b=>b.x+b.w))-x+20,
       h:Math.max(...boxes.map(b=>b.y+b.h))-y+20};
@@ -34,7 +30,8 @@ export function zoneBounds(layout, id) {
   const z=layout.zones.find(z=>z.id===id);
   if (!z) return null;
   const b=z.bounds;
-  return {x:b.x-20,y:b.y-20,w:b.w+40,h:b.h+126};
+  const boxes=[b,emptySign(z),nameSign(z)],x=Math.min(...boxes.map(b=>b.x))-20,y=Math.min(...boxes.map(b=>b.y))-20;
+  return {x,y,w:Math.max(...boxes.map(b=>b.x+b.w))-x+20,h:Math.max(...boxes.map(b=>b.y+b.h))-y+20};
 }
 export function cameraForZone(layout, id) {
   const b=zoneBounds(layout,id);
@@ -52,8 +49,8 @@ export function interpolateCamera(from,to,progress) {
 export function computeLayout(cssW, cssH, camera = { x: 0, y: 0, zoom: 1 }) {
   const plots = [];
   for (let r = 0; r < GAME.rows; r++) for (let c = 0; c < GAME.cols; c++) {
-    const cx = 920 + (c - r) * 66, cy = 740 + (c + r) * 37;
-    plots.push({ index: r * GAME.cols + c, cx, cy, w: 122, h: 64, x: cx - 61, y: cy - 32 });
+    const {originX,originY,sx,sy}=PLOT_GRID,cx=originX+(c-r)*sx,cy=originY+(c+r)*sy;
+    plots.push({ index: r * GAME.cols + c, cx, cy, w:2*sx,h:2*sy,x:cx-sx,y:cy-sy });
   }
   return { cssW, cssH, camera: { ...camera }, plots, zones: makeZones() };
 }
@@ -69,13 +66,13 @@ export function hitTestPlot(x, y, layout) {
   const p = toWorld(x, y, layout);
   return layout.plots.find(t => Math.abs(p.x - t.cx) / (t.w / 2) + Math.abs(p.y - t.cy) / (t.h / 2) <= 1) || null;
 }
-export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 0, selectedSeed, hoveredIndex }) {
+export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 0, selectedSeed, hoveredIndex, debugOverlay={} }) {
   const { cssW, cssH, camera, plots } = layout;
   // Cover viewport padding with meadow art even when the world is smaller.
   drawScenery(ctx,{w:cssW,h:cssH});
   ctx.save(); ctx.translate(camera.x, camera.y); ctx.scale(camera.zoom, camera.zoom);
   drawScenery(ctx, WORLD);
-  const field=getImage('tiles/soil-field.webp'), b=fieldBounds(plots);
+  const field=getImage('tiles/soil-field.webp'), b=FIELD;
   if(field) drawSprite(ctx,'tiles/soil-field.webp',b.x,b.y,b.w,b.h);
   for (const p of [...plots].sort((a,b)=>a.cy-b.cy)) {
     const view = getPlotView(state.plots[p.index], now);
@@ -106,5 +103,10 @@ export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 
     }
   }
   drawLivestock(ctx,state,layout,animationNow,now);
+  if(debugOverlay.plots)for(const p of plots){
+    ctx.beginPath();ctx.moveTo(p.cx,p.cy-p.h/2);ctx.lineTo(p.cx+p.w/2,p.cy);ctx.lineTo(p.cx,p.cy+p.h/2);ctx.lineTo(p.cx-p.w/2,p.cy);ctx.closePath();ctx.strokeStyle='#ff357a';ctx.lineWidth=2;ctx.stroke();
+    ctx.beginPath();ctx.arc(p.cx,p.cy,3,0,Math.PI*2);ctx.fillStyle='#ff357a';ctx.fill();
+  }
+  if(debugOverlay.walk)for(const z of layout.zones){const poly=walkPolygon(z);ctx.beginPath();poly.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.strokeStyle='#00eaff';ctx.lineWidth=2;ctx.stroke();}
   ctx.restore();
 }

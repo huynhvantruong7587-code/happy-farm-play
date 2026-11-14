@@ -2,7 +2,7 @@ import { loadAssets } from './render/assets.js';
 let assetsSettled = false;
 loadAssets(value => { document.getElementById('loading-progress').style.width = `${value*100}%`; }).then(() => { assetsSettled = true; });
 import * as livestock from './game/systems/livestock.js';
-import { livestockViews, animalBubbles, hitTestAnimalBubble, hitTestLivestock, hitTestZone, hitTestEmptySign } from './render/livestockView.js';
+import { zoneAttachment, emptySign, livestockViews, animalBubbles, hitTestAnimalBubble, hitTestLivestock, hitTestZone, hitTestEmptySign } from './render/livestockView.js';
 import { mapInput, canvasInput, isPortraitRotated, bindLandscape } from './ui/inputMap.js';
 import { CROPS, GAME, ANIMALS, PRODUCTS, ZONE_NAMES, formatMs } from './game/config.js';
 import { createInitialState } from './game/state.js';
@@ -35,10 +35,9 @@ function openZone(id){if(!state.pens[id])return false;switchTab('farm');openZone
 function positionBubble(){
   if(!openZoneId)return;const z=layout.zones.find(z=>z.id===openZoneId),c=layout.camera;
   let ox=0,oy=0;for(let e=canvas;e&&e!==app;e=e.offsetParent){ox+=e.offsetLeft;oy+=e.offsetTop;}
-  const x=ox+z.cx*c.zoom+c.x,top=oy+(z.cy-z.bounds.h/2)*c.zoom+c.y;
-  const animals=livestockViews(state,layout,lastAnimationNow).filter(v=>v.status!=='empty').map(v=>({x:ox+(v.x-50)*c.zoom+c.x,y:oy+(v.y-90)*c.zoom+c.y,w:100*c.zoom,h:105*c.zoom}));
+  const anchor=zoneAttachment(z,'anchor');
   const pos=bubblePlacement({w:app.clientWidth,h:app.clientHeight},{w:bubble.offsetWidth,h:bubble.offsetHeight},
-    {x,top,left:x-z.bounds.w*c.zoom/2,right:x+z.bounds.w*c.zoom/2},animals);
+    {x:ox+anchor.x*c.zoom+c.x,y:oy+anchor.y*c.zoom+c.y},oy);
   bubble.style.left=pos.x+'px';bubble.style.top=pos.y+'px';
 }
 function renderZone(){
@@ -57,6 +56,7 @@ function renderZone(){
   positionBubble();
 }
 
+let debugOverlay={plots:false,walk:false};
 let hoveredIndex = -1;
 let layout = computeLayout(1, 1);
 const camera = { x: 0, y: 0, zoom: 0.85 };
@@ -234,7 +234,7 @@ function frame(animationNow) {
   drawnLivestock=livestockViews(state,layout,animationNow);
   // Growth uses Unix time, matching persisted plantedAt. rAF time is cosmetic only.
   drawFarm(renderer.ctx, state, layout, {
-    now: Date.now(), animationNow, selectedSeed, hoveredIndex,
+    now: Date.now(), animationNow, selectedSeed, hoveredIndex, debugOverlay,
   });
   effects.draw(renderer.ctx, layout, animationNow, canvas, document.getElementById('warehouse-button'));
   positionBubble();
@@ -254,6 +254,7 @@ function bindCamera() {
   const sync = () => {
     clampCamera(camera, renderer.size.cssW, renderer.size.cssH);
     layout = computeLayout(renderer.size.cssW, renderer.size.cssH, camera);
+    positionBubble();
   };
   const zoom = (factor, before, after = before) => {
     cameraTween=null;
@@ -368,6 +369,9 @@ function exposeDebug() {
     harvestChicken:i=>runLivestock('harvestChicken',i),
     harvestMutton:i=>runLivestock('harvestMutton',i),
     jumpTo,openZone,setSeedTray,setChrome,
+    emptySign,
+    setDebugOverlay: flags => {for(const key of ['plots','walk'])if(key in flags)debugOverlay[key]=!!flags[key];return {...debugOverlay};},
+    getDebugOverlay:()=>({...debugOverlay}),
     getUI:()=>({trayOpen,chromeVisible,openZone:openZoneId}),
     getAnimalBubbles:()=>animalBubbles(drawnLivestock,lastAnimationNow),
     getLivestockViews:()=>livestockViews(state,layout,lastAnimationNow),

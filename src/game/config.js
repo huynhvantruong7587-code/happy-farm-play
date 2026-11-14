@@ -2,7 +2,7 @@
 
 export const GAME = {
   name: '开心农场',
-  version: 8,
+  version: 9,
   saveKey: 'happy-farm-h5-v1',
   cols: 3,
   rows: 4,

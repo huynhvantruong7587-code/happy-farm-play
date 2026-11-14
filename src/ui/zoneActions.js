@@ -20,17 +20,10 @@ export function canvasTapAction(openZoneId, trayOpen, targetZoneId=null, hasPlot
   return trayOpen?'close-tray':'toggle-chrome';
 }
 
-// Choose the least obstructive in-app placement, using sprite bounds in app coordinates.
-export function bubblePlacement(app, size, zone, animals=[]) {
+// The caret tip follows an app-local projection of the world anchor.
+export function bubblePlacement(app,size,anchor,safeTop=0) {
   const clamp=(v,min,max)=>Math.max(min,Math.min(Math.max(min,max),v));
-  const candidates=[
-    [zone.x-size.w/2,zone.top-size.h-14],
-    [zone.left-size.w-12,zone.top-size.h/2],
-    [zone.right+12,zone.top-size.h/2],
-    [zone.x-size.w/2,8],
-    [8,8],[app.w-size.w-8,8]
-  ];
-  const overlap=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));
-  return candidates.map(([x,y],i)=>({x:clamp(x,8,app.w-size.w-8),y:clamp(y,8,app.h-size.h-16),w:size.w,h:size.h,i}))
-    .sort((a,b)=>animals.reduce((n,r)=>n+overlap(a,r)-overlap(b,r),0)||a.i-b.i)[0];
+  const onScreen=anchor.x>=0&&anchor.x<=app.w&&anchor.y>=0&&anchor.y<=app.h;
+  const x=anchor.x-size.w/2,y=anchor.y-size.h-14;
+  return {x:onScreen?clamp(x,0,app.w-size.w):x,y:onScreen?clamp(y,safeTop,app.h-size.h-14):y,w:size.w,h:size.h};
 }
