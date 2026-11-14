@@ -31,7 +31,16 @@ function setSeedTray(value){trayOpen=!!value;app.classList.toggle('tray-open',tr
 function setChrome(value){chromeVisible=!!value;app.classList.toggle('chrome-hidden',!chromeVisible);}
 function closeZone(){openZoneId=null;bubble.hidden=true;}
 function shopYoung(){switchTab('shop');document.getElementById('shop-young')?.scrollIntoView({block:'start'});}
-function openZone(id){if(!state.pens[id])return false;switchTab('farm');openZoneId=id;renderZone();return true;}
+const millPanel=document.getElementById('panel-mill');
+function closeMill(){millPanel.classList.add('hidden');app.classList.remove('mill-open');}
+function renderMill(){
+  document.getElementById('mill-inventory').textContent=`库存：小麦×${state.inventory.wheat} · 玉米×${state.inventory.corn} · 饲料×${state.inventory.feed}`;
+  millPanel.querySelectorAll('[data-mill-material]').forEach(b=>{b.disabled=state.inventory[b.dataset.millMaterial]<(b.dataset.millMaterial==='wheat'?2:1);});
+}
+function openZone(id){
+  if(id==='house'){closeZone();closeMill();toast('暂未开放');return true;}
+  if(id==='mill'){switchTab('farm');renderMill();millPanel.classList.remove('hidden');app.classList.add('mill-open');return true;}
+  if(!state.pens[id])return false;switchTab('farm');openZoneId=id;renderZone();return true;}
 function positionBubble(){
   if(!openZoneId)return;const z=layout.zones.find(z=>z.id===openZoneId),c=layout.camera;
   let ox=0,oy=0;for(let e=canvas;e&&e!==app;e=e.offsetParent){ox+=e.offsetLeft;oy+=e.offsetTop;}
@@ -73,6 +82,7 @@ function firstOwnedSeed(s) {
 
 function refreshUI() {
   updateHud(state);
+  renderMill();
   renderZone();
   renderSeedTray(state, selectedSeed, { onSelect: selectSeed });
   if (activeTab === 'shop') renderShop(state, { onBuy: handleBuy, onYoung: k=>runLivestock('buyYoung',k), onFeed:()=>runLivestock('buyFeed'), onCraft:m=>runLivestock('craftFeed',m) });
@@ -167,6 +177,7 @@ function handleSell(cropId, count) {
 
 function switchTab(tab) {
   closeZone();
+  closeMill();
   if(tab==='shop'||tab==='bag')document.getElementById('toasts').replaceChildren();
   activeTab = tab;
   setActiveTab(tab);
@@ -185,12 +196,13 @@ function runLivestock(method,...args) {
       place:()=>`${ANIMALS[args[2]].name}已放入${ZONE_NAMES[args[0]]}`,
       feed:()=> '喂食成功，开始计时'};
     if(!batchLivestock)toast(outputs?`收获 ${outputs}`:messages[method]());persist();
-  } else if(!batchLivestock)toast(({wrong_zone:`请放到${ZONE_NAMES[ANIMALS[args[2]]?.zone] || '对应养殖区'}`,invalid:'操作参数无效',no_coins:'金币不够啦',locked:'等级不足，先收获升级',no_material:'制作材料不足',no_feed:'饲料不足，请去商店购买或用小麦、玉米制作饲料',no_stock:'没有这种幼畜或鱼苗了',occupied:'这个栏位已有动物',already_fed:'已经喂过了',hungry:'请先在气泡中喂饲料',not_ready:'还没到收获时间',empty:'请先放入幼畜或鱼苗'})[result.reason] || '现在无法操作');
+  } else if(!batchLivestock)toast(({wrong_zone:`请放到${ZONE_NAMES[ANIMALS[args[2]]?.zone] || '对应养殖区'}`,invalid:'操作参数无效',no_coins:'金币不够啦',locked:'等级不足，先收获升级',no_material:'材料不足',no_feed:'饲料不足，请去商店购买或用小麦、玉米制作饲料',no_stock:'没有这种幼畜或鱼苗了',occupied:'这个栏位已有动物',already_fed:'已经喂过了',hungry:'请先在气泡中喂饲料',not_ready:'还没到收获时间',empty:'请先放入幼畜或鱼苗'})[result.reason] || '现在无法操作');
   refreshUI();return result;
 }
 function jumpTo(id) {
   if(!cameraForZone(layout,id))return false;
   document.getElementById('toasts').replaceChildren();
+  closeZone();closeMill();
   switchTab('farm');if(id==='farm')setSeedTray(true);cameraInitialized=true;
   cameraTween={start:performance.now(),from:{...camera},id};return true;
 }
@@ -220,7 +232,10 @@ function frame(animationNow) {
   renderer.resize();
   const { cssW, cssH } = renderer.size;
   if (!cameraInitialized) {
-    Object.assign(camera, cameraForZone(computeLayout(cssW, cssH), 'farm'));
+    const hub=cameraForZone(computeLayout(cssW,cssH),'house');
+    const center={x:(cssW/2-hub.x)/hub.zoom,y:(cssH/2-hub.y)/hub.zoom};
+    hub.zoom*=.85;hub.x=cssW/2-center.x*hub.zoom;hub.y=cssH/2-center.y*hub.zoom;
+    Object.assign(camera,hub);
     cameraInitialized = true;
   }
   if(cameraTween) {
@@ -303,6 +318,9 @@ function bindCamera() {
 }
 
 function bindUi() {
+  document.getElementById('btn-close-mill').onclick=closeMill;
+  millPanel.onclick=e=>{if(e.target===millPanel)closeMill();};
+  millPanel.querySelectorAll('[data-mill-material]').forEach(b=>b.onclick=()=>runLivestock('craftFeed',b.dataset.millMaterial));
   document.addEventListener('pointerdown',e=>{if(e.target!==canvas&&!bubble.contains(e.target))closeZone();});
   const tray=document.getElementById('seed-tray');let drag=null,suppress=false;
   tray.addEventListener('pointerdown',e=>{const p=mapInput(e.clientX,e.clientY);drag={id:e.pointerId,x:p.x,scroll:tray.scrollLeft,moved:false};suppress=false;});
@@ -378,6 +396,7 @@ function exposeDebug() {
     mapInput,
     isPortraitRotated,
     getState: () => JSON.parse(JSON.stringify(state)),
+    setCamera: c => {cameraTween=null;Object.assign(camera,c);cameraInitialized=true;clampCamera(camera,renderer.size.cssW,renderer.size.cssH);layout=computeLayout(renderer.size.cssW,renderer.size.cssH,camera);return {...camera};},
     getLayout: () => layout,
     getPlotViews: () => state.plots.map(p => getPlotView(p, Date.now())),
     getSelectedSeed: () => selectedSeed,

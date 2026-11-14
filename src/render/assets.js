@@ -23,7 +23,7 @@ const paths = [
   "animals/pig-1.webp",
   "animals/sheep-0.webp",
   "animals/sheep-1.webp",
-  "bg/meadow.webp",
+  "bg/farm-map.webp",
   "crops/cabbage-0.webp",
   "crops/cabbage-1.webp",
   "crops/cabbage-2.webp",
@@ -49,16 +49,9 @@ const paths = [
   "crops/wheat-1.webp",
   "crops/wheat-2.webp",
   "pens/coop-front.webp",
-  "pens/coop.webp",
   "pens/cow-front.webp",
-  "pens/cow.webp",
   "pens/pig-front.webp",
-  "pens/pig.webp",
-  "pens/pond.webp",
-  "pens/sheep-front.webp",
-  "pens/sheep.webp",
-  "tiles/soil.webp",
-  "tiles/soil-field.webp"
+  "pens/sheep-front.webp"
 ];
 const images = new Map();
 let pending;

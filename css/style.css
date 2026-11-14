@@ -837,3 +837,12 @@ html, body {
 /* 六个跳转入口在矮屏保持可用，不挤入养殖区。 */
 .zone-actions { gap: 2px; }
 .zone-jump { width: clamp(27px, 10vh, 40px); height: clamp(27px, 10vh, 40px); flex-shrink: 1; min-height: 25px; }
+
+/* The mill uses the existing parchment modal, with room for short screens. */
+#panel-mill .modal-card { max-height: 100%; overflow-y: auto; padding: 12px 20px; }
+#panel-mill p { margin: 8px 0; font-size: 13px; }
+#panel-mill .btn { padding: 8px; }
+#btn-close-mill { margin-top: 10px; }
+.mill-open .toasts { z-index: 31; }
+
+#panel-mill .btn-buy:disabled { opacity: 0.42; background: #c5d4b3; box-shadow: none; }

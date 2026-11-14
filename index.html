@@ -45,6 +45,8 @@
     </main>
 
     <nav class="zone-actions" aria-label="区域跳转">
+      <button class="zone-jump" data-zone="house" aria-label="前往小屋">🏠<span>小屋</span></button>
+      <button class="zone-jump" data-zone="mill" aria-label="前往加工厂">⚙️<span>加工厂</span></button>
       <button class="zone-jump" data-zone="farm" aria-label="前往农田">🌾<span>农田</span></button>
       <button class="zone-jump" data-zone="pond" aria-label="前往鱼塘">🐟<span>鱼塘</span></button>
       <button class="zone-jump" data-zone="pig" aria-label="前往猪圈">🐷<span>猪圈</span></button>
@@ -116,6 +118,17 @@
     <aside id="zone-bubble" class="zone-bubble" hidden aria-label="养殖操作"></aside>
     <div id="toasts" class="toasts" aria-live="polite"></div>
 
+    <div id="panel-mill" class="modal hidden" role="dialog" aria-modal="true" aria-label="饲料加工厂">
+      <div class="modal-card">
+        <h2>饲料加工厂</h2>
+        <p id="mill-inventory"></p>
+        <p>小麦×2 → 饲料×1</p>
+        <button type="button" class="btn btn-buy" data-mill-material="wheat">用小麦制作</button>
+        <p>玉米×1 → 饲料×1</p>
+        <button type="button" class="btn btn-buy" data-mill-material="corn">用玉米制作</button>
+        <button type="button" id="btn-close-mill" class="btn">关闭</button>
+      </div>
+    </div>
     <div id="modal-levelup" class="modal hidden" role="dialog" aria-modal="true" aria-label="升级">
       <div class="modal-card">
         <div class="levelup-emoji" aria-hidden="true">🎉</div>
