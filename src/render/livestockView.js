@@ -49,8 +49,8 @@ export function makeZones() {
     const z={...source,label:ZONE_NAMES[source.id] || (source.id==='house'?'农场主小屋':'饲料加工厂')};
     const b=z.bounds;z.cx=b.x+b.w/2;z.cy=b.y+b.h/2;
     const poly=movementPolygon(z);
-    z.slots=[];
-    if(!poly.length)return z;
+    z.slots=(source.slots || []).map(s=>({...s}));
+    if(z.id!=='pond'||!poly.length)return z;
     const center=poly.reduce((a,p)=>[a[0]+p[0]/poly.length,a[1]+p[1]/poly.length],[0,0]);
     const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);
     z.yard={rx:(Math.max(...xs)-Math.min(...xs))/2,ry:(Math.max(...ys)-Math.min(...ys))/2};
@@ -83,14 +83,13 @@ export function hitTestEmptySign(x,y,layout,state) {
 export function occupantPosition(o,z,slot,t) {
   let seed=0;for(const c of o.id)seed=(seed*31+c.charCodeAt(0))>>>0;
   const phase=seed%628/100,cycle=t/9000+phase,part=cycle%1,paused=part>.72;
-  const u=Math.min(1,part/.72),clock=(Math.floor(cycle)+u*u*(3-2*u))*2+phase;
   const poly=movementPolygon(z),j=z.yard;
   if(z.id==='pond'){
     const center=poly.reduce((a,p)=>[a[0]+p[0]/poly.length,a[1]+p[1]/poly.length],[0,0]);
     const a=t/6500+phase+slot.index*Math.PI/2;
     return {...project(center[0]+Math.sin(a)*j.rx*.8,center[1]+Math.cos(a)*j.ry*.8,poly),flip:Math.cos(a)<0,paused:false};
   }
-  return {...project(slot.cx+Math.sin(clock)*j.rx*.15,slot.cy+Math.cos(clock*.71)*j.ry*.65,poly),flip:Math.cos(clock)<0,paused};
+  return {x:slot.cx,y:slot.cy+Math.sin(t/650+phase)*.8,flip:false,paused};
 }
 export function livestockViews(state,layout,t,now=Date.now()) {
   return layout.zones.filter(z=>z.walk && state.pens[z.id]).flatMap(z=>z.slots.map(s=>{const o=state.pens[z.id][s.index];return {zoneId:z.id,index:s.index,...getOccupantView(o,now),...(o?occupantPosition(o,z,s,t):{x:s.cx,y:s.cy})};}));
@@ -102,16 +101,23 @@ export function hitTestLivestock(x,y,layout,views) {
 // Shared world-space geometry keeps drawing and rotated-canvas input aligned.
 export function animalBubbles(views,t=0) {
   const icons={chicken:'egg',sheep:'wool',pig:'pork',cow:'beef'};
-  const bubbles=views.filter(v=>v.status==='ready'||v.status==='hungry').map(v=>({
-    zoneId:v.zoneId,index:v.index,action:v.status==='hungry'?'feed':'harvest',
-    icon:`icons/${v.status==='hungry'?'feed':v.zoneId==='pond'?'fish':icons[v.kind]}.webp`,
-    x:v.x,y:v.y-(v.zoneId==='pond'?43:v.kind==='chicken'?60:98)*SCALE+Math.sin(t/650+v.index)*2,r:27,
+  const bubbles=views.filter(v=>v.status==='ready').map(v=>({
+    zoneId:v.zoneId,index:v.index,action:'open-zone',
+    icon:`icons/${v.zoneId==='pond'?'fish':icons[v.kind]}.webp`,
+    x:v.x,y:v.y-(v.zoneId==='pond'?90:v.kind==='chicken'?150:165)*SCALE+Math.sin(t/650+v.index)*2,r:27,
   }));
-  for(let pass=0;pass<24;pass++)for(let i=0;i<bubbles.length;i++)for(let j=i+1;j<bubbles.length;j++){
-    const a=bubbles[i],b=bubbles[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),gap=a.r+b.r+3.01;
-    if(d>=gap)continue;
-    const nx=d?dx/d:1,ny=d?dy/d:0,n=(gap-d)/2;
-    a.x-=nx*n;a.y-=ny*n;b.x+=nx*n;b.y+=ny*n;
+  // Lift reminders above nearby sprites too, then stack any colliding reminders upward.
+  // Moving only upward preserves clearance from each reminder's own animal.
+  const halfWidth=v=>(v.zoneId==='pond'?44:v.kind==='cow'?49.5:v.kind==='chicken'?23:41.5)*SCALE;
+  for(const b of bubbles){
+    for(const v of views.filter(v=>v.status!=='empty')){
+      if(v.zoneId===b.zoneId && Math.abs(b.x-v.x)<b.r+halfWidth(v))b.y=Math.min(b.y,v.y-(v.zoneId==='pond'?28:92)*SCALE-43);
+    }
+  }
+  const placed=[];
+  for(const b of bubbles.sort((a,b)=>a.y-b.y)){
+    while(placed.some(a=>Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r+3))b.y-=b.r*2+4;
+    placed.push(b);
   }
   return bubbles;
 }

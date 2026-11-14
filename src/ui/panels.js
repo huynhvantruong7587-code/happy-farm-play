@@ -97,7 +97,8 @@ export function renderSeedTray(state, selectedSeed, { onSelect }) {
   const tray = document.getElementById('seed-tray');
   if (!tray) return;
   tray.innerHTML = '';
-  for (const crop of CROP_LIST) {
+  if(!CROP_LIST.some(c=>state.seeds[c.id]>0))tray.textContent='还没有种子';
+  for (const crop of CROP_LIST.filter(c => state.seeds[c.id] > 0)) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'seed-chip' + (selectedSeed === crop.id ? ' is-selected' : '') + ((state.seeds[crop.id] || 0) === 0 ? ' is-empty' : '');

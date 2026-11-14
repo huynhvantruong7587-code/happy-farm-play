@@ -2,7 +2,7 @@ import { loadAssets } from './render/assets.js';
 let assetsSettled = false;
 loadAssets(value => { document.getElementById('loading-progress').style.width = `${value*100}%`; }).then(() => { assetsSettled = true; });
 import * as livestock from './game/systems/livestock.js';
-import { zoneAttachment, emptySign, livestockViews, animalBubbles, hitTestAnimalBubble, hitTestLivestock, hitTestZone, hitTestEmptySign } from './render/livestockView.js';
+import { emptySign, livestockViews, animalBubbles, hitTestAnimalBubble, hitTestLivestock, hitTestZone, hitTestEmptySign } from './render/livestockView.js';
 import { mapInput, canvasInput, isPortraitRotated, bindLandscape } from './ui/inputMap.js';
 import { CROPS, GAME, ANIMALS, PRODUCTS, ZONE_NAMES, formatMs } from './game/config.js';
 import { createInitialState } from './game/state.js';
@@ -17,8 +17,6 @@ import { updateHud } from './ui/hud.js';
 import { renderShop, renderBag, renderMore, renderSeedTray, setActiveTab } from './ui/panels.js';
 import { toast, showLevelUp, hideLevelUp } from './ui/toast.js';
 
-import { zoneActions, canvasTapAction, bubblePlacement } from './ui/zoneActions.js';
-
 const canvas = document.getElementById('farm-canvas');
 const renderer = createRenderer(canvas);
 
@@ -26,11 +24,10 @@ let state = loadState();
 let selectedSeed = firstOwnedSeed(state);
 let activeTab = 'farm';
 let trayOpen=false, chromeVisible=true, openZoneId=null;
-const app=document.getElementById('app'), bubble=document.getElementById('zone-bubble');
+const app=document.getElementById('app'), bubble=document.getElementById('panel-animal');
 function setSeedTray(value){trayOpen=!!value;app.classList.toggle('tray-open',trayOpen);}
 function setChrome(value){chromeVisible=!!value;app.classList.toggle('chrome-hidden',!chromeVisible);}
 function closeZone(){openZoneId=null;bubble.hidden=true;}
-function shopYoung(){switchTab('shop');document.getElementById('shop-young')?.scrollIntoView({block:'start'});}
 const millPanel=document.getElementById('panel-mill');
 function closeMill(){millPanel.classList.add('hidden');app.classList.remove('mill-open');}
 function renderMill(){
@@ -38,31 +35,39 @@ function renderMill(){
   millPanel.querySelectorAll('[data-mill-material]').forEach(b=>{b.disabled=state.inventory[b.dataset.millMaterial]<(b.dataset.millMaterial==='wheat'?2:1);});
 }
 function openZone(id){
+  setSeedTray(false);
+  if(id==='shop'){switchTab('bag');return true;}
   if(id==='house'){closeZone();closeMill();toast('暂未开放');return true;}
   if(id==='mill'){switchTab('farm');renderMill();millPanel.classList.remove('hidden');app.classList.add('mill-open');return true;}
   if(!state.pens[id])return false;switchTab('farm');openZoneId=id;renderZone();return true;}
-function positionBubble(){
-  if(!openZoneId)return;const z=layout.zones.find(z=>z.id===openZoneId),c=layout.camera;
-  let ox=0,oy=0;for(let e=canvas;e&&e!==app;e=e.offsetParent){ox+=e.offsetLeft;oy+=e.offsetTop;}
-  const anchor=zoneAttachment(z,'anchor');
-  const pos=bubblePlacement({w:app.clientWidth,h:app.clientHeight},{w:bubble.offsetWidth,h:bubble.offsetHeight},
-    {x:ox+anchor.x*c.zoom+c.x,y:oy+anchor.y*c.zoom+c.y},oy);
-  bubble.style.left=pos.x+'px';bubble.style.top=pos.y+'px';
-}
 function renderZone(){
-  if(!openZoneId)return;const id=openZoneId,a=zoneActions(state,id);bubble.hidden=false;bubble.replaceChildren();
-  const content=document.createElement('div');content.className='zone-bubble-content';bubble.append(content);
-  const title=document.createElement('strong');title.textContent=ZONE_NAMES[id];content.append(title);
-  const button=(text,action)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=action;content.append(b);};
-  for(const young of a.young)button(`${young.emoji} ${young.name} ×${state.stock[young.id]}`,()=>{const i=zoneActions(state,id).free;if(i<0){toast('栏位已满');return;}runLivestock('place',id,i,young.id);});
-  if(!a.young.length&&a.empty){const p=document.createElement('p');p.textContent=id==='pond'?'去商店买鱼苗吧':'去商店买幼崽吧';content.append(p);button('去商店',shopYoung);}
-  if(!a.empty&&!a.hungry.length&&!a.ready.length){const p=document.createElement('p');p.textContent='正在成长，耐心等一等';content.append(p);}
-  if(a.hungry.length)button(`喂饲料（${state.inventory.feed} 份）`,()=>{const hungry=zoneActions(state,id).hungry;let n=0;for(const i of hungry){if(!state.inventory.feed)break;if(runLivestockBatchItem('feed',id,i).ok)n++;}toast(n===hungry.length?`喂食成功，${n} 只开始计时`:`已喂食 ${n} 只，饲料不足，还剩 ${hungry.length-n} 只饥饿`);});
-  if(a.ready.length)button(id==='chicken'?`收鸡蛋（${a.ready.length} 只）`:id==='sheep'?`剪羊毛（${a.ready.length} 只）`:`收获（${a.ready.length} 只已就绪）`,()=>{const outputs={};for(const i of zoneActions(state,id).ready){const r=runLivestockBatchItem('harvest',id,i);if(r.ok)for(const [k,n] of Object.entries(r.outputs||{}))outputs[k]=(outputs[k]||0)+n;}toast('收获 '+Object.entries(outputs).map(([k,n])=>`${PRODUCTS[k].name}×${n}`).join('、'));});
-  for(const i of a.chicken)button(`收鸡肉 · 第 ${i+1} 只`,()=>runLivestock('harvestChicken',i));
-  for(const i of a.sheep)button(`收羊肉 · 第 ${i+1} 只`,()=>runLivestock('harvestMutton',i));
-  if(!a.empty){button('再买',shopYoung);content.lastChild.className='zone-more';}
-  positionBubble();
+  if(!openZoneId)return;
+  const id=openZoneId;
+  bubble.hidden=false;
+  const content=document.getElementById('animal-slots');content.replaceChildren();
+  document.getElementById('animal-title').textContent=ZONE_NAMES[id];
+  const kinds=Object.values(ANIMALS).filter(a=>a.zone===id);
+  const productIds=[...new Set([...kinds.flatMap(a=>Object.keys(a.outputs)),...(id==='chicken'?['chickenMeat']:id==='sheep'?['mutton']:[])])];
+  document.getElementById('animal-inventory').textContent='已积累：'+productIds.map(k=>`${PRODUCTS[k].name}×${state.inventory[k]}`).join(' · ')+` · 饲料×${state.inventory.feed}`;
+  state.pens[id].forEach((o,i)=>{
+    const v=livestock.getOccupantView(o),row=document.createElement('article');row.className='animal-slot';
+    const label=document.createElement('p');
+    const output=Object.entries(v.outputs).map(([k,n])=>`${PRODUCTS[k].name}×${n}`).join('、');
+    label.textContent=`栏位 ${i+1} · `+(v.status==='empty'?'空栏':`${v.animal.emoji} ${v.animal.name} · `+({hungry:'饥饿',growing:`生产中 ${formatMs(v.remainingMs)}`,ready:`待收取 ${output}`}[v.status]));row.append(label);
+    const button=(text,action,disabled=false)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.disabled=disabled;b.onclick=action;row.append(b);};
+    if(!o){
+      for(const young of kinds)button(`放入幼崽 · ${young.name}（库存 ${state.stock[young.id]}${state.stock[young.id]?'':` · 购买 ${young.cost} 金币`}）`,()=>{
+        if(!state.stock[young.id]&&!runLivestock('buyYoung',young.id).ok)return;
+        runLivestock('place',id,i,young.id);
+      },state.level<young.unlockLevel);
+    }else{
+      if(v.status!=='ready'){const pending=document.createElement('small');pending.textContent='本轮产出：'+output;row.append(pending);}
+      button('喂食',()=>runLivestock('feed',id,i),v.status!=='hungry');
+      button('收取',()=>runLivestock('harvest',id,i),v.status!=='ready');
+      if(id==='chicken'||id==='sheep')button('出售 · '+(id==='chicken'?'鸡肉':'羊肉')+'入库',()=>runLivestock(id==='chicken'?'harvestChicken':'harvestMutton',i));
+    }
+    content.append(row);
+  });
 }
 
 let debugOverlay={plots:false,walk:false};
@@ -178,14 +183,13 @@ function handleSell(cropId, count) {
 function switchTab(tab) {
   closeZone();
   closeMill();
+  if(tab!=='farm')setSeedTray(false);
   if(tab==='shop'||tab==='bag')document.getElementById('toasts').replaceChildren();
   activeTab = tab;
   setActiveTab(tab);
   refreshUI();
 }
 
-let batchLivestock=false;
-function runLivestockBatchItem(method,...args){batchLivestock=true;try{return runLivestock(method,...args);}finally{batchLivestock=false;}}
 function runLivestock(method,...args) {
   const result=livestock[method](state,...args);
   if(result.ok) {
@@ -195,31 +199,26 @@ function runLivestock(method,...args) {
       buyFeed:()=>`买到饲料 ×${args[0]??1}`,craftFeed:()=> '制作饲料 ×1',
       place:()=>`${ANIMALS[args[2]].name}已放入${ZONE_NAMES[args[0]]}`,
       feed:()=> '喂食成功，开始计时'};
-    if(!batchLivestock)toast(outputs?`收获 ${outputs}`:messages[method]());persist();
-  } else if(!batchLivestock)toast(({wrong_zone:`请放到${ZONE_NAMES[ANIMALS[args[2]]?.zone] || '对应养殖区'}`,invalid:'操作参数无效',no_coins:'金币不够啦',locked:'等级不足，先收获升级',no_material:'材料不足',no_feed:'饲料不足，请去商店购买或用小麦、玉米制作饲料',no_stock:'没有这种幼畜或鱼苗了',occupied:'这个栏位已有动物',already_fed:'已经喂过了',hungry:'请先在气泡中喂饲料',not_ready:'还没到收获时间',empty:'请先放入幼畜或鱼苗'})[result.reason] || '现在无法操作');
+    toast(outputs?`收获 ${outputs}`:messages[method]());persist();
+  } else toast(({wrong_zone:`请放到${ZONE_NAMES[ANIMALS[args[2]]?.zone] || '对应养殖区'}`,invalid:'操作参数无效',no_coins:'金币不够啦',locked:'等级不足，先收获升级',no_material:'材料不足',no_feed:'饲料不足，请去商店购买或用小麦、玉米制作饲料',no_stock:'没有这种幼畜或鱼苗了',occupied:'这个栏位已有动物',already_fed:'已经喂过了',hungry:'请先在动物面板中喂食',not_ready:'还没到收获时间',empty:'请先放入幼畜或鱼苗'})[result.reason] || '现在无法操作');
   refreshUI();return result;
 }
 function jumpTo(id) {
   if(!cameraForZone(layout,id))return false;
   document.getElementById('toasts').replaceChildren();
   closeZone();closeMill();
-  switchTab('farm');if(id==='farm')setSeedTray(true);cameraInitialized=true;
+  switchTab('farm');setSeedTray(id==='farm');cameraInitialized=true;
   cameraTween={start:performance.now(),from:{...camera},id};return true;
 }
 
 function tap(x, y) {
   if (activeTab !== 'farm') { switchTab('farm'); return; }
   const animalBubble=hitTestAnimalBubble(x,y,layout,animalBubbles(drawnLivestock,lastAnimationNow));
-  if(animalBubble){runLivestock(animalBubble.action,animalBubble.zoneId,animalBubble.index);return;}
-  const target=hitTestZone(x,y,layout)||layout.zones.find(z=>z.id===hitTestLivestock(x,y,layout,drawnLivestock)?.zoneId);
-  const action=canvasTapAction(openZoneId,trayOpen,target?.id,!!hitTestPlot(x,y,layout));
-  if(action==='keep-zone')return;
-  if(action==='close-zone'){closeZone();return;}
-  if(hitTestEmptySign(x,y,layout,state)){shopYoung();return;}
-  const zone=target;
-  if(zone){openZone(zone.id);return;}
+  const animal=hitTestLivestock(x,y,layout,drawnLivestock);
+  const target=animalBubble?.zoneId || animal?.zoneId || hitTestEmptySign(x,y,layout,state)?.id || hitTestZone(x,y,layout)?.id;
+  if(target){openZone(target);return;}
   const hit=hitTestPlot(x,y,layout);
-  if(!hit){if(trayOpen)setSeedTray(false);else setChrome(!chromeVisible);return;}
+  if(!hit){setSeedTray(false);return;}
   setSeedTray(true);
   const view = getPlotView(state.plots[hit.index], Date.now());
   if (view.status === 'ripe') handleHarvest(hit.index);
@@ -250,8 +249,7 @@ function frame(animationNow) {
     now: Date.now(), animationNow, selectedSeed, hoveredIndex, debugOverlay,
   });
   effects.draw(renderer.ctx, layout, animationNow, canvas, document.getElementById('warehouse-button'));
-  positionBubble();
-  if(openZoneId){const key=JSON.stringify(zoneActions(state,openZoneId));if(bubble.dataset.status!==key){bubble.dataset.status=key;renderZone();}}
+  if(openZoneId){const key=JSON.stringify(state.pens[openZoneId].map(o=>{const v=livestock.getOccupantView(o);return [v.status,Math.ceil(v.remainingMs/1000)];}));if(bubble.dataset.status!==key){bubble.dataset.status=key;renderZone();}}
   finishLoading();
   requestAnimationFrame(frame);
 }
@@ -267,7 +265,6 @@ function bindCamera() {
   const sync = () => {
     clampCamera(camera, renderer.size.cssW, renderer.size.cssH);
     layout = computeLayout(renderer.size.cssW, renderer.size.cssH, camera);
-    positionBubble();
   };
   const zoom = (factor, before, after = before) => {
     cameraTween=null;
@@ -319,7 +316,9 @@ function bindUi() {
   document.getElementById('btn-close-mill').onclick=closeMill;
   millPanel.onclick=e=>{if(e.target===millPanel)closeMill();};
   millPanel.querySelectorAll('[data-mill-material]').forEach(b=>b.onclick=()=>runLivestock('craftFeed',b.dataset.millMaterial));
-  document.addEventListener('pointerdown',e=>{if(e.target!==canvas&&!bubble.contains(e.target))closeZone();});
+  document.getElementById('btn-close-animal').onclick=closeZone;
+  bubble.onclick=e=>{if(e.target===bubble)closeZone();};
+  document.addEventListener('pointerdown',e=>{if(!document.getElementById('seed-tray').contains(e.target)&&e.target!==canvas)setSeedTray(false);});
   const tray=document.getElementById('seed-tray');let drag=null,suppress=false;
   tray.addEventListener('pointerdown',e=>{const p=mapInput(e.clientX,e.clientY);drag={id:e.pointerId,x:p.x,scroll:tray.scrollLeft,moved:false};suppress=false;});
   tray.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId)return;const dx=mapInput(e.clientX,e.clientY).x-drag.x;if(Math.abs(dx)>6){drag.moved=true;tray.setPointerCapture(e.pointerId);}if(drag.moved){tray.scrollLeft=drag.scroll-dx;suppress=true;}});

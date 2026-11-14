@@ -2,11 +2,11 @@
 
 export const GAME = {
   name: '开心农场',
-  version: 11,
+  version: 12,
   saveKey: 'happy-farm-h5-v1',
   cols: 6,
   rows: 4,
-  startCoins: 80,
+  startCoins: 10000,
   startSeeds: { wheat: 3, carrot: 0, corn: 0, cabbage: 2 },
 };
 
@@ -26,7 +26,7 @@ export const CROPS = {
     name: '小麦',
     emoji: '🌾',
     seedCost: 10,
-    growMs: 2 * 60 * 1000,
+    growMs: 3 * 60 * 1000,
     sellPrice: 18,
     xp: 5,
     unlockLevel: 1,
@@ -43,7 +43,7 @@ export const CROPS = {
     name: '胡萝卜',
     emoji: '🥕',
     seedCost: 25,
-    growMs: 5 * 60 * 1000,
+    growMs: 3 * 60 * 1000,
     sellPrice: 48,
     xp: 12,
     unlockLevel: 2,
@@ -60,7 +60,7 @@ export const CROPS = {
     name: '玉米',
     emoji: '🌽',
     seedCost: 60,
-    growMs: 10 * 60 * 1000,
+    growMs: 3 * 60 * 1000,
     sellPrice: 120,
     xp: 22,
     unlockLevel: 3,
@@ -75,7 +75,7 @@ export const CROPS = {
   cabbage: {
     id: 'cabbage', name: '白菜', emoji: '🥬',
     seedCost: 5, sellPrice: 9, xp: 3, unlockLevel: 1,
-    growMs: 1 * 60 * 1000,
+    growMs: 3 * 60 * 1000,
     stages: [
       { at: 0, label: '刚种下', emoji: '🌱', scale: 0.62 },
       { at: 0.22, label: '发芽', emoji: '🌱', scale: 0.72 },
@@ -99,7 +99,7 @@ export const CROPS = {
   tomato: {
     id: 'tomato', name: '番茄', emoji: '🍅',
     seedCost: 30, sellPrice: 58, xp: 13, unlockLevel: 5,
-    growMs: 4 * 60 * 1000,
+    growMs: 3 * 60 * 1000,
     stages: [
       { at: 0, label: '刚种下', emoji: '🌱', scale: 0.62 },
       { at: 0.22, label: '发芽', emoji: '🌱', scale: 0.72 },
@@ -111,7 +111,7 @@ export const CROPS = {
   strawberry: {
     id: 'strawberry', name: '草莓', emoji: '🍓',
     seedCost: 45, sellPrice: 90, xp: 18, unlockLevel: 6,
-    growMs: 6 * 60 * 1000,
+    growMs: 3 * 60 * 1000,
     stages: [
       { at: 0, label: '刚种下', emoji: '🌱', scale: 0.62 },
       { at: 0.22, label: '发芽', emoji: '🌱', scale: 0.72 },
@@ -123,7 +123,7 @@ export const CROPS = {
   pumpkin: {
     id: 'pumpkin', name: '南瓜', emoji: '🎃',
     seedCost: 55, sellPrice: 112, xp: 23, unlockLevel: 7,
-    growMs: 8 * 60 * 1000,
+    growMs: 3 * 60 * 1000,
     stages: [
       { at: 0, label: '刚种下', emoji: '🌱', scale: 0.62 },
       { at: 0.22, label: '发芽', emoji: '🌱', scale: 0.72 },
@@ -144,16 +144,16 @@ export const PRODUCTS = Object.fromEntries([
   ['crucianMeat','鲫鱼肉','🐟',45], ['carpMeat','鲤鱼肉','🐟',80], ['goldfishMeat','金鱼肉','🐠',130],
 ].map(([id,name,emoji,sellPrice]) => [id,{id,name,emoji,sellPrice}]));
 export const ANIMALS = Object.fromEntries([
-  ['chicken','小鸡','🐥','chicken',30,4,2,{egg:1}],
-  ['pig','小猪','🐷','pig',40,5,1,{pork:1}],
-  ['cow','牛犊','🐮','cow',70,8,2,{beef:1,hide:1}],
-  ['sheep','羊羔','🐑','sheep',50,6,3,{wool:1}],
+  ['chicken','小鸡','🐥','chicken',30,3,2,{egg:1}],
+  ['pig','小猪','🐷','pig',40,3,1,{pork:1}],
+  ['cow','牛犊','🐮','cow',70,3,2,{beef:1,hide:1}],
+  ['sheep','羊羔','🐑','sheep',50,3,3,{wool:1}],
   ['crucian','鲫鱼苗','🐟','pond',20,3,1,{crucianMeat:1}],
-  ['carp','鲤鱼苗','🐟','pond',40,6,2,{carpMeat:1}],
-  ['goldfish','金鱼苗','🐠','pond',65,9,3,{goldfishMeat:1}],
+  ['carp','鲤鱼苗','🐟','pond',40,3,2,{carpMeat:1}],
+  ['goldfish','金鱼苗','🐠','pond',65,3,3,{goldfishMeat:1}],
 ].map(([id,name,emoji,zone,cost,minutes,unlockLevel,outputs]) =>
   [id,{id,name,emoji,zone,cost,growMs:minutes*60000,unlockLevel,outputs,xp:minutes*2}]));
-export const ZONE_NAMES = { farm:'农田', chicken:'鸡舍', pig:'猪圈', cow:'牛棚', sheep:'羊圈', pond:'鱼塘' };
+export const ZONE_NAMES = { farm:'农田', shop:'仓库', house:'暂未开放', mill:'饲料加工厂', chicken:'鸡舍', pig:'猪圈', cow:'牛棚', sheep:'羊圈', pond:'鱼塘' };
 export const PEN_SIZES = { pig:3, cow:3, sheep:3, pond:4, chicken:4 };
 
 /** 后续迭代：建筑（占位，暂不开放） */

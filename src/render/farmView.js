@@ -28,29 +28,23 @@ export function zoneBounds(layout, id) {
   const boxes=[b,emptySign(z,.45),nameSign(z,.45)].filter(Boolean),x=Math.min(...boxes.map(b=>b.x))-20,y=Math.min(...boxes.map(b=>b.y))-20;
   return {x,y,w:Math.max(...boxes.map(b=>b.x+b.w))-x+20,h:Math.max(...boxes.map(b=>b.y+b.h))-y+20};
 }
-export function cameraForZone(layout, id) {
-  const b=zoneBounds(layout,id);
-  if (!b) return null;
-  const zoom=Math.min(id==='farm'?0.70:0.85,(layout.cssW-(id==='farm'?88:24))/b.w,(layout.cssH-24)/b.h);
-  const target={zoom,x:layout.cssW/2-(b.x+b.w/2)*zoom,y:layout.cssH/2-(b.y+b.h/2)*zoom};
-  if(id==='farm')target.x=Math.max(target.x,64-b.x*zoom);
+function fitCamera(layout,b,left=12,right=12) {
+  const zoom=Math.max(WORLD.minZoom,Math.min(.85,(layout.cssW-left-right)/b.w,(layout.cssH-24)/b.h));
+  const target={zoom,x:left+(layout.cssW-left-right-b.w*zoom)/2-b.x*zoom,y:(layout.cssH-b.h*zoom)/2-b.y*zoom};
   clampCamera(target,layout.cssW,layout.cssH);
   return target;
 }
-// Keep the field clear of the left jump column while retaining the cottage hub.
+export function cameraForZone(layout, id) {
+  if(id==='house')return homeCamera(layout);
+  const b=zoneBounds(layout,id);
+  if(!b)return null;
+  return fitCamera(layout,b,id==='farm'?64:12,id==='pig'?200:12);
+}
+// Frame the cottage and all field beds, reserving the left navigation strip.
 export function homeCamera(layout) {
-  const hub=cameraForZone(layout,'house');
-  const center={x:(layout.cssW/2-hub.x)/hub.zoom,y:(layout.cssH/2-hub.y)/hub.zoom};
-  const left=Math.min(...layout.plots.map(p=>p.x));
-  const house=layout.zones.find(z=>z.id==='house').bounds;
-  hub.zoom=Math.min(hub.zoom*.85,(layout.cssW-76)/(house.x+house.w-left));
-  hub.x=layout.cssW/2-center.x*hub.zoom;
-  hub.y=layout.cssH/2-center.y*hub.zoom;
-  const fieldLeft=Math.min(...layout.plots.map(p=>p.x))*hub.zoom+hub.x;
-  const rightRoom=layout.cssW-12-((house.x+house.w)*hub.zoom+hub.x);
-  hub.x+=Math.max(0,Math.min(64-fieldLeft,rightRoom));
-  clampCamera(hub,layout.cssW,layout.cssH);
-  return hub;
+  const field=zoneBounds(layout,'farm'),house=layout.zones.find(z=>z.id==='house').bounds;
+  const x=field.x,y=Math.min(field.y,house.y)-12;
+  return fitCamera(layout,{x,y,w:house.x+house.w-x+12,h:Math.max(field.y+field.h,house.y+house.h)-y+12},64,12);
 }
 export function interpolateCamera(from,to,progress) {
   const e=1-Math.pow(1-Math.max(0,Math.min(1,progress)),3);

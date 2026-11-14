@@ -12,18 +12,9 @@ export function zoneActions(state,id,now=Date.now()) {
     sheep:id==='sheep'?slots.flatMap((o,i)=>o?[i]:[]):[]};
 }
 
-// A canvas tap consumes one layer at a time; an open bubble owns the tap.
+// Grass dismisses the seed tray without changing chrome.
 export function canvasTapAction(openZoneId, trayOpen, targetZoneId=null, hasPlot=false) {
-  if(openZoneId)return targetZoneId===openZoneId?'keep-zone':'close-zone';
   if(targetZoneId)return 'open-zone';
   if(hasPlot)return 'plot';
-  return trayOpen?'close-tray':'toggle-chrome';
-}
-
-// The caret tip follows an app-local projection of the world anchor.
-export function bubblePlacement(app,size,anchor,safeTop=0) {
-  const clamp=(v,min,max)=>Math.max(min,Math.min(Math.max(min,max),v));
-  const onScreen=anchor.x>=0&&anchor.x<=app.w&&anchor.y>=0&&anchor.y<=app.h;
-  const x=anchor.x-size.w/2,y=anchor.y-size.h-14;
-  return {x:onScreen?clamp(x,0,app.w-size.w):x,y:onScreen?clamp(y,safeTop,app.h-size.h-14):y,w:size.w,h:size.h};
+  return trayOpen?'close-tray':'none';
 }
