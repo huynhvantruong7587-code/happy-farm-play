@@ -868,13 +868,13 @@ export const MAP_LAYOUT = {
         },
         {
           "index": 2,
-          "cx": 620,
-          "cy": 1688
+          "cx": 520,
+          "cy": 1610
         },
         {
           "index": 3,
-          "cx": 300,
-          "cy": 1625
+          "cx": 320,
+          "cy": 1575
         }
       ]
     },
@@ -1491,11 +1491,18 @@ export const MAP_LAYOUT = {
     {
       "id": "pig",
       "text": "猪圈",
-      "x": 1406,
-      "y": 1250,
-      "w": 100,
-      "h": 26,
-      "angle": 8
+      "x": 1116,
+      "y": 1464,
+      "w": 132,
+      "h": 92,
+      "angle": 8,
+      "board": {
+        "file": "signs/pig.webp",
+        "x": 1075,
+        "y": 1439,
+        "w": 190,
+        "h": 228
+      }
     },
     {
       "id": "cow",

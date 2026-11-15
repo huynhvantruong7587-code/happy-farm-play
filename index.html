@@ -63,9 +63,9 @@
 
     <section id="panel-shop" class="sheet hidden" role="dialog" aria-label="商店">
       <header class="sheet-head">
+        <h2>🛒 商店</h2>
+        <p>购买种子、幼畜鱼苗和饲料</p>
         <button type="button" class="sheet-close" aria-label="关闭面板">×</button>
-        <h2>商店</h2>
-        <p>购买种子、幼畜鱼苗和饲料，回到地图放置与喂养</p>
       </header>
       <nav class="shop-tabs" aria-label="商店分类"><button data-shop-tab="seeds">种子</button><button data-shop-tab="animals">动物</button><button data-shop-tab="feed">饲料</button></nav>
       <div id="shop-list" class="card-list"></div>
@@ -73,9 +73,9 @@
 
     <section id="panel-bag" class="sheet hidden" role="dialog" aria-label="仓库">
       <header class="sheet-head">
+        <h2>🎒 仓库</h2>
+        <p>保存收获，前往集市交易</p>
         <button type="button" class="sheet-close" aria-label="关闭面板">×</button>
-        <h2>仓库</h2>
-        <p>保存收获的作物、畜产品和鱼肉，前往集市交易</p>
       </header>
       <div class="sheet-body"><p id="bag-empty" class="empty-hint">仓库暂无产品，去农田、围栏或鱼塘收获吧</p>
       <div id="bag-list" class="card-list"></div></div>
@@ -83,9 +83,9 @@
 
     <section id="panel-more" class="sheet hidden" role="dialog" aria-label="更多">
       <header class="sheet-head">
-        <button type="button" class="sheet-close" aria-label="关闭面板">×</button>
-        <h2>更多</h2>
+        <h2>✨ 更多</h2>
         <p>农场会一点点长大</p>
+        <button type="button" class="sheet-close" aria-label="关闭面板">×</button>
       </header>
       <div class="sheet-body"><div class="more-block">
         <h3>怎么玩</h3>
@@ -120,8 +120,7 @@
 
     <div id="panel-animal" class="animal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="animal-title">
       <section class="animal-panel">
-        <header class="animal-head"><button id="animal-buy" class="pill-primary">购买</button><button id="btn-close-animal" class="sheet-close" type="button" aria-label="关闭动物面板">×</button>
-        <h2 id="animal-title"></h2><p id="animal-inventory"></p></header>
+        <header class="animal-head"><h2 id="animal-title"></h2><button id="animal-buy" class="pill-primary">购买</button><button id="btn-close-animal" class="sheet-close" type="button" aria-label="关闭动物面板">×</button><p id="animal-inventory"></p></header>
         <div id="animal-slots"></div>
       </section>
     </div>
@@ -129,7 +128,7 @@
 
     <div id="panel-mill" class="modal hidden" role="dialog" aria-modal="true" aria-label="饲料加工厂">
       <div class="modal-card">
-        <header class="mill-head"><button type="button" id="btn-close-mill" class="sheet-close" aria-label="关闭加工厂">×</button><h2>⚙️ 饲料加工厂</h2>
+        <header class="mill-head"><h2>⚙️ 饲料加工厂</h2><button type="button" id="btn-close-mill" class="sheet-close" aria-label="关闭加工厂">×</button>
         <p id="mill-inventory"></p></header><div class="mill-body">
         <div class="recipe-row"><div data-recipe="wheat"></div><button type="button" class="pill-primary" data-mill-material="wheat">制作</button></div>
         <div class="recipe-row"><div data-recipe="corn"></div><button type="button" class="pill-primary" data-mill-material="corn">制作</button></div>

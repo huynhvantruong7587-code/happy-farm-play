@@ -18,12 +18,11 @@ export function renderShop(state, { onBuy, onYoung, onFeed, onCraft, tab = 'seed
       <div class="card-emoji" aria-hidden="true">${itemIcon(crop)}</div>
       <div class="card-body">
         <h3>${crop.name}</h3>
-        <p class="meta">种子 ${crop.seedCost} 金币 · 生长 ${formatGrowTime(crop.growMs)}</p>
-        <p class="meta">收获经验 +${crop.xp}</p>
-        <p class="owned">拥有种子：${state.seeds[crop.id] || 0}</p>
+        <p class="meta price-row"><span class="coin-price"><span class="coin-icon" aria-hidden="true">🪙</span>${crop.seedCost}</span><span class="meta-sep">生长 ${formatGrowTime(crop.growMs)}</span></p>
+        <p class="meta">收获经验 +${crop.xp} · 拥有 ${state.seeds[crop.id] || 0}</p>
         ${locked ? `<p class="lock">🔒 ${crop.unlockLevel} 级解锁</p>` : ''}
       </div>
-      <button class="btn btn-buy" data-id="${crop.id}" ${locked || unaffordable ? 'disabled' : ''}>
+      <button class="btn btn-buy pill-primary card-action" data-id="${crop.id}" ${locked || unaffordable ? 'disabled' : ''}>
         ${locked ? '未解锁' : unaffordable ? '金币不足' : '购买'}
       </button>
     `;
@@ -35,7 +34,7 @@ export function renderShop(state, { onBuy, onYoung, onFeed, onCraft, tab = 'seed
   for(const a of tab==='animals'?Object.values(ANIMALS):[]) {
     const locked=state.level<a.unlockLevel, disabled=locked || state.coins<a.cost;
     const card=document.createElement('article');card.className='card';
-    card.innerHTML=`<div class="card-emoji">${a.emoji}</div><div class="card-body"><h3>${a.name}</h3><p class="meta">${a.cost} 金币 · 喂食后 ${formatGrowTime(a.growMs)}</p><p class="meta">携带 ${state.stock[a.id]} · ${a.unlockLevel} 级解锁</p></div><button class="btn btn-buy" ${disabled?'disabled':''}>${locked?'未解锁':disabled?'金币不足':'购买'}</button>`;
+    card.innerHTML=`<div class="card-emoji">${a.emoji}</div><div class="card-body"><h3>${a.name}</h3><p class="meta price-row"><span class="coin-price"><span class="coin-icon" aria-hidden="true">🪙</span>${a.cost}</span><span class="meta-sep">喂食后 ${formatGrowTime(a.growMs)}</span></p><p class="meta">携带 ${state.stock[a.id]} · ${a.unlockLevel} 级解锁</p></div><button class="btn btn-buy pill-primary card-action" ${disabled?'disabled':''}>${locked?'未解锁':disabled?'金币不足':'购买'}</button>`;
     card.querySelector('button').onclick=()=>onYoung(a.id);list.append(card);
   }
 
@@ -45,7 +44,8 @@ export function renderShop(state, { onBuy, onYoung, onFeed, onCraft, tab = 'seed
     ['玉米×1 → 饲料×1',state.inventory.corn<1,()=>onCraft('corn')],
   ]:[])) {
     const card=document.createElement('article');card.className='card';
-    card.innerHTML=`<div class="card-emoji">🥣</div><div class="card-body"><h3>${label}</h3><p class="meta">拥有饲料 ${state.inventory.feed}${disabled?(label.startsWith('购买')?' · 金币不足':' · 材料不足'):''}</p></div><button class="btn btn-buy" ${disabled?'disabled':''}>${label.startsWith('购买')?'购买':'制作'}</button>`;
+    const isBuy=label.startsWith('购买');
+    card.innerHTML=`<div class="card-emoji">🥣</div><div class="card-body"><h3>${isBuy?'饲料':label}</h3>${isBuy?`<p class="meta price-row"><span class="coin-price"><span class="coin-icon" aria-hidden="true">🪙</span>${FEED.cost}</span></p>`:''}<p class="meta">拥有饲料 ${state.inventory.feed}${disabled?(isBuy?' · 金币不足':' · 材料不足'):''}</p></div><button class="btn btn-buy pill-primary card-action" ${disabled?'disabled':''}>${isBuy?'购买':'制作'}</button>`;
     card.querySelector('button').onclick=action;list.append(card);
   }
 
@@ -66,7 +66,7 @@ export function renderBag(state) {
       <div class="card-emoji" aria-hidden="true">${itemIcon(crop)}</div>
       <div class="card-body">
         <h3>${crop.name} × ${count}</h3>
-        <p class="meta">单价 ${crop.sellPrice} 金币</p>
+        <p class="meta price-row"><span class="coin-price"><span class="coin-icon" aria-hidden="true">🪙</span>${crop.sellPrice}</span><span>单价</span></p>
         <p class="meta">带到集市与客人交易</p>
       </div>
     `;

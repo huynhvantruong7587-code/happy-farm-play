@@ -51,7 +51,8 @@ const paths = [
   "pens/coop-front.webp",
   "pens/cow-front.webp",
   "pens/pig-front.webp",
-  "pens/sheep-front.webp"
+  "pens/sheep-front.webp",
+  "signs/pig.webp"
 ];
 for(const pose of ['idle','walk0','walk1'])for(const facing of ['s','se','sw','n','ne','nw'])paths.push(`farmer/${pose}-${facing}.webp`);
 const images = new Map();

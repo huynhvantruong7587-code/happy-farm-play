@@ -262,11 +262,11 @@ html, body {
   grid-template-columns: 52px 1fr auto;
   gap: 10px;
   align-items: center;
-  background: #fff;
+  background: #fff4dc;
   border-radius: 16px;
-  padding: 12px;
-  box-shadow: 0 2px 0 #e6d2ae;
-  border: 1px solid #f0e0c4;
+  padding: 10px 12px;
+  box-shadow: inset 0 1px 0 #fff8e8, 0 2px 0 #e6d2ae;
+  border: 1px solid #e4c58a;
 }
 
 .card.is-locked {
@@ -848,19 +848,28 @@ html, body {
 .recipe-row, .recipe-row > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .recipe-row { border-radius: 12px; background: #fff5de; padding: 12px; margin: 8px 0; }
 #btn-close-mill { margin-top: 8px; }
-/* v14: fixed parchment headers; only content regions scroll. */
+/* v14.1: shared parchment popup chrome. */
 .sheet { display:flex; flex-direction:column; overflow:hidden; border:5px solid #946032; background:linear-gradient(#fff3d2,#e8c998); }
-.sheet-head { flex:none; display:grid; grid-template-columns:1fr auto; position:relative; padding-right:32px; }
-.sheet-head h2 { grid-column:1; margin:0; }
-.sheet-head p { grid-column:1; margin:3px 0 8px; font-size:12px; }
-.sheet-head .sheet-close { right:0; top:0; }
-.sheet-body,#shop-list { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
-.shop-tabs { display:flex; gap:8px; flex:none; padding:4px 0 8px; }
-.shop-tabs button { flex:1; border:1px solid #b68b50; border-radius:12px; background:#f8e4b7; color:#654323; padding:6px; }
-.animal-panel,#panel-mill .modal-card { display:flex; flex-direction:column; overflow:hidden; }
-.animal-head,.mill-head { flex:none; position:relative; }
-#animal-buy { position:absolute; left:0; top:0; padding:3px 10px; }
+.sheet-head, .animal-head, .mill-head {
+  flex:none; display:grid; grid-template-columns:1fr auto auto; align-items:center;
+  column-gap:8px; row-gap:0; position:relative; min-height:36px; padding:0 0 4px;
+}
+.sheet-head h2, .animal-head h2, .mill-head h2 {
+  grid-column:1; grid-row:1; margin:0; font-size:18px; line-height:28px; font-weight:700;
+}
+.sheet-head p, .animal-head p, .mill-head p, #animal-inventory, #mill-inventory {
+  grid-column:1 / -1; grid-row:2; margin:0 0 2px; font-size:12px; line-height:18px;
+}
+.sheet-head .sheet-close, .animal-head .sheet-close, .mill-head .sheet-close {
+  grid-column:3; grid-row:1; position:static; float:none; justify-self:end; margin:0;
+}
+#animal-buy { grid-column:2; grid-row:1; position:static; justify-self:end; align-self:center; padding:3px 12px; margin:0; }
 #animal-buy[hidden] { display:none !important; }
+.sheet-body,#shop-list { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+.shop-tabs { display:flex; gap:8px; flex:none; padding:2px 0 8px; }
+.shop-tabs button { flex:1; border:1px solid #b68b50; border-radius:12px; background:#f8e4b7; color:#654323; padding:6px; }
+.shop-tabs button[aria-selected="true"] { background:#cf9b53; color:#fff7e4; box-shadow:inset 0 1px 3px #7c512a55; }
+.animal-panel,#panel-mill .modal-card { display:flex; flex-direction:column; overflow:hidden; }
 #animal-slots,.mill-body { min-height:0; overflow-y:auto; }
 #animal-slots:not(.market-slots) .animal-slot { position:relative; display:flex; flex-direction:column; align-items:center; }
 .slot-actions { margin-top:auto; display:flex; align-items:center; justify-content:center; min-height:26px; flex:none; width:100%; }
@@ -877,6 +886,18 @@ html, body {
 #panel-mill .modal-card { max-height:100%; }
 #animal-slots:not(.market-slots) .growth-track { width:calc(100% - 10px); flex:none; }
 #animal-slots:not(.market-slots) .slot-sprite { flex:none; margin:0 auto; }
-#animal-slots:not(.market-slots) .slot-output { flex:none; }
+#animal-slots:not(.market-slots) .slot-output { flex:none; display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap; }
 .shop-tabs button[aria-selected="true"] { background:#cf9b53; color:#fff7e4; box-shadow:inset 0 1px 3px #7c512a55; }
 .customer-card .speech-bubble > div { height:24px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.card-action { justify-self:end; align-self:center; min-width:68px; padding:5px 12px; border-radius:999px; }
+.price-row { display:flex; align-items:center; gap:12px; }
+.meta-sep { color:#7a6550; }
+.coin-price { display:inline-flex; align-items:center; gap:4px; font-weight:700; color:#7a4e1e; }
+.coin-price .coin-icon { font-size:14px; line-height:1; }
+.item-count { display:inline-flex; align-items:center; gap:3px; margin:0; padding:1px 7px 1px 3px; border-radius:11px; background:#fff6e4; vertical-align:middle; }
+.item-count img { width:20px; height:20px; display:block; }
+.item-count .item-emoji { font-size:16px; line-height:20px; }
+.item-count .item-qty { font-weight:700; font-size:12px; color:#5c3a1c; line-height:20px; }
+#animal-inventory, #mill-inventory { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+#animal-slots:not(.market-slots) .slot-output .item-count { background:#fff8ea; }
+#btn-close-mill { margin-top:0; }

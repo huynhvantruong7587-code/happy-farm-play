@@ -26,12 +26,14 @@ export function zoneBounds(layout, id) {
   const z=layout.zones.find(z=>z.id===id);
   if (!z) return null;
   const b=z.bounds;
-  const boxes=[b,...MAP_LAYOUT.SIGNS.filter(s=>s.id===id)].filter(Boolean),x=Math.min(...boxes.map(b=>b.x))-20,y=Math.min(...boxes.map(b=>b.y))-20;
+  const boxes=[b,...MAP_LAYOUT.SIGNS.filter(s=>s.id===id).flatMap(s=>s.board?[s,s.board]:[s])];
+  if(z.roof){const r=44;boxes.push({x:z.roof.x-r-10,y:z.roof.y-r-32-r-20,w:r*2+20,h:r*2+52});}
+  const x=Math.min(...boxes.map(b=>b.x))-20,y=Math.min(...boxes.map(b=>b.y))-20;
   return {x,y,w:Math.max(...boxes.map(b=>b.x+b.w))-x+20,h:Math.max(...boxes.map(b=>b.y+b.h))-y+20};
 }
-function fitCamera(layout,b,left=12,right=12) {
-  const zoom=Math.max(WORLD.minZoom,Math.min(.85,(layout.cssW-left-right)/b.w,(layout.cssH-24)/b.h));
-  const target={zoom,x:left+(layout.cssW-left-right-b.w*zoom)/2-b.x*zoom,y:(layout.cssH-b.h*zoom)/2-b.y*zoom};
+function fitCamera(layout,b,left=12,right=12,top=48,bottom=12) {
+  const zoom=Math.max(WORLD.minZoom,Math.min(.85,(layout.cssW-left-right)/b.w,(layout.cssH-top-bottom)/b.h));
+  const target={zoom,x:left+(layout.cssW-left-right-b.w*zoom)/2-b.x*zoom,y:top+(layout.cssH-top-bottom-b.h*zoom)/2-b.y*zoom};
   clampCamera(target,layout.cssW,layout.cssH);
   return target;
 }
@@ -85,10 +87,21 @@ export function plotIndicatorSizes(zoom) {
     font: bounded(11, 12, 17),
     barWidth: bounded(52, 40, 72),
     barHeight: bounded(5, 4, 7),
-    sparkle: bounded(14, 12, 17),
+    sparkle: bounded(15, 13, 18),
     gap: 4 / zoom,
     stroke: bounded(2, 1.5, 2.5),
   };
+}
+function drawStarSparkle(ctx,x,y,r,alpha){
+  ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle='#ffe38a';ctx.strokeStyle='#c99220';ctx.lineWidth=Math.max(0.9,r*.07);ctx.shadowColor='rgba(255,206,90,.7)';ctx.shadowBlur=Math.max(2,r*.25);
+  ctx.beginPath();
+  for(let i=0;i<4;i++){
+    const a=-Math.PI/2+i*Math.PI/2;
+    const ox=x+Math.cos(a)*r,oy=y+Math.sin(a)*r;
+    const ix=x+Math.cos(a+Math.PI/4)*r*.28,iy=y+Math.sin(a+Math.PI/4)*r*.28;
+    i?ctx.lineTo(ox,oy):ctx.moveTo(ox,oy);ctx.lineTo(ix,iy);
+  }
+  ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
 }
 export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 0, selectedPlotIndex = -1, debugOverlay={}, farmerAnimation={} } = {}) {
   const { cssW, cssH, camera, plots } = layout;
@@ -129,11 +142,15 @@ export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 
       ctx.restore();
     }
     if(ripe) {
-      const x=p.cx,y=p.y-indicator.gap-indicator.sparkle/2,alpha=.45+.3*(1+Math.sin(animationNow/900+p.index))/2;
-      const radius=indicator.sparkle/2;
-      ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle='#fff6c9';ctx.lineWidth=indicator.stroke;
-      ctx.beginPath();ctx.moveTo(x-radius*5/7,y);ctx.lineTo(x+radius*5/7,y);ctx.moveTo(x,y-radius);ctx.lineTo(x,y+radius);ctx.stroke();
-      ctx.fillStyle='#e9bd63';ctx.beginPath();ctx.arc(x,y,indicator.stroke*.9,0,Math.PI*2);ctx.fill();ctx.restore();
+      const picks=[];
+      for(const idx of [2, Math.max(3,plants.length-3)]) {
+        const pt=plants[idx];
+        if(pt && !picks.some(q=>q.x===pt.x && q.y===pt.y)) picks.push(pt);
+      }
+      picks.slice(0,2).forEach((pt,i)=>{
+        const twinkle=.62+.28*(1+Math.sin(animationNow/720+p.index*1.4+i*2.1))/2;
+        drawStarSparkle(ctx,pt.x+(i?8:-4),pt.y-height*.86,indicator.sparkle*(i?0.7:0.58),twinkle);
+      });
     } else {
       const {barWidth,barHeight,font,gap}=indicator;
       const x=p.cx-barWidth/2,y=p.y-gap-barHeight;

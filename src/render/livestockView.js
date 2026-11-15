@@ -133,6 +133,7 @@ export function drawLivestock(ctx,state,layout,t,now) {
   for(const front of Object.values(MAP_LAYOUT.FRONTS))drawSprite(ctx,front.file,front.x,front.y,front.w,front.h);
   for(const b of animalBubbles(views,t,state))drawAnimalBubble(ctx,b);
   for(const s of MAP_LAYOUT.SIGNS){
+    if(s.board)drawSprite(ctx,s.board.file,s.board.x,s.board.y,s.board.w,s.board.h);
     ctx.save();ctx.translate(s.x+s.w/2,s.y+s.h/2);ctx.rotate((s.angle||0)*Math.PI/180);
     const len=Math.max(1,[...s.text].length);
     const heightFrac=s.h<50?0.84:0.48;
