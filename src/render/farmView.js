@@ -1,5 +1,5 @@
 import { drawFarmer } from './farmerView.js';
-import { makeZones, drawLivestock, walkPolygon } from './livestockView.js';
+import { makeZones, drawLivestock, walkPolygon, ANIMAL_BUBBLE_RADIUS } from './livestockView.js';
 import { drawAnchored } from './assets.js';
 import { drawScenery } from './scenery.js';
 import { formatMs } from '../game/config.js';
@@ -8,11 +8,15 @@ import { fillRoundRect, drawText } from './draw.js';
 
 import { MAP_LAYOUT } from './mapLayout.js';
 export const WORLD = MAP_LAYOUT.WORLD;
+// Cover the viewport so painted map edges and the green letterbox never show.
+export function coverMinZoom(w, h) {
+  return Math.max(WORLD.minZoom, w / WORLD.w, h / WORLD.h);
+}
 export function clampCamera(camera, w, h) {
-  camera.zoom = Math.max(WORLD.minZoom, Math.min(WORLD.maxZoom, camera.zoom));
+  camera.zoom = Math.max(coverMinZoom(w, h), Math.min(WORLD.maxZoom, camera.zoom));
   for (const [axis, extent, viewport] of [['x', WORLD.w, w], ['y', WORLD.h, h]]) {
     const span = extent * camera.zoom;
-    camera[axis] = span < viewport ? (viewport - span) / 2 : Math.max(viewport - span, Math.min(axis === 'x' ? Math.max(0, 64 - (Math.min(...MAP_LAYOUT.PLOTS.map(p=>p.x)) - 20) * camera.zoom) : 0, camera[axis]));
+    camera[axis] = Math.max(viewport - span, Math.min(0, camera[axis]));
   }
 }
 // Include every rendered extremity, then add breathing room in world pixels.
@@ -27,7 +31,7 @@ export function zoneBounds(layout, id) {
   if (!z) return null;
   const b=z.bounds;
   const boxes=[b,...MAP_LAYOUT.SIGNS.filter(s=>s.id===id).flatMap(s=>s.board?[s,s.board]:[s])];
-  if(z.roof){const r=44;boxes.push({x:z.roof.x-r-10,y:z.roof.y-r-32-r-20,w:r*2+20,h:r*2+52});}
+  if(z.roof){const r=ANIMAL_BUBBLE_RADIUS;boxes.push({x:z.roof.x-r-10,y:z.roof.y-r-32-r-20,w:r*2+20,h:r*2+52});}
   const x=Math.min(...boxes.map(b=>b.x))-20,y=Math.min(...boxes.map(b=>b.y))-20;
   return {x,y,w:Math.max(...boxes.map(b=>b.x+b.w))-x+20,h:Math.max(...boxes.map(b=>b.y+b.h))-y+20};
 }
@@ -87,13 +91,13 @@ export function plotIndicatorSizes(zoom) {
     font: bounded(11, 12, 17),
     barWidth: bounded(52, 40, 72),
     barHeight: bounded(5, 4, 7),
-    sparkle: bounded(15, 13, 18),
+    sparkle: bounded(8, 3.2, 9),
     gap: 4 / zoom,
     stroke: bounded(2, 1.5, 2.5),
   };
 }
 function drawStarSparkle(ctx,x,y,r,alpha){
-  ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle='#ffe38a';ctx.strokeStyle='#c99220';ctx.lineWidth=Math.max(0.9,r*.07);ctx.shadowColor='rgba(255,206,90,.7)';ctx.shadowBlur=Math.max(2,r*.25);
+  ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle='#ffe38a';ctx.strokeStyle='#c99220';ctx.lineWidth=Math.max(0.55,r*.06);ctx.shadowColor='rgba(255,206,90,.4)';ctx.shadowBlur=Math.max(1,r*.14);
   ctx.beginPath();
   for(let i=0;i<4;i++){
     const a=-Math.PI/2+i*Math.PI/2;
@@ -142,15 +146,12 @@ export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 
       ctx.restore();
     }
     if(ripe) {
-      const picks=[];
-      for(const idx of [2, Math.max(3,plants.length-3)]) {
-        const pt=plants[idx];
-        if(pt && !picks.some(q=>q.x===pt.x && q.y===pt.y)) picks.push(pt);
+      // One small glint on a mature plot only — never a field of sparkles.
+      const pt=plants[Math.min(2, plants.length-1)];
+      if(pt){
+        const twinkle=.34+.16*(1+Math.sin(animationNow/900+p.index*1.4))/2;
+        drawStarSparkle(ctx,pt.x,pt.y-height*.82,indicator.sparkle,twinkle);
       }
-      picks.slice(0,2).forEach((pt,i)=>{
-        const twinkle=.62+.28*(1+Math.sin(animationNow/720+p.index*1.4+i*2.1))/2;
-        drawStarSparkle(ctx,pt.x+(i?8:-4),pt.y-height*.86,indicator.sparkle*(i?0.7:0.58),twinkle);
-      });
     } else {
       const {barWidth,barHeight,font,gap}=indicator;
       const x=p.cx-barWidth/2,y=p.y-gap-barHeight;

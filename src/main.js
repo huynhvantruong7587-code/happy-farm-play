@@ -14,7 +14,7 @@ import { plant, harvest, getPlotView, forceRipe } from './game/systems/farm.js';
 import { buySeed } from './game/systems/economy.js';
 import { addXp } from './game/systems/progression.js';
 import { createRenderer } from './render/canvas.js';
-import { computeLayout, hitTestPlot, clampCamera, homeCamera, cameraForZone, interpolateCamera, WORLD, toWorld, drawFarm } from './render/farmView.js';
+import { computeLayout, hitTestPlot, clampCamera, coverMinZoom, homeCamera, cameraForZone, interpolateCamera, WORLD, toWorld, drawFarm } from './render/farmView.js';
 import { createEffects } from './render/effects.js';
 import { updateHud } from './ui/hud.js';
 import { renderShop, renderBag, renderMore, renderSeedTray, setActiveTab } from './ui/panels.js';
@@ -258,7 +258,7 @@ function tap(x, y) {
   if(hit){if(!farmMode){enterFarmMode(hit.index);return;}selectedPlotIndex=hit.index;}
   else {
     setFarmMode(false);
-    const animalBubble=hitTestAnimalBubble(x,y,layout,animalBubbles(drawnLivestock,lastAnimationNow,state));
+    const animalBubble=hitTestAnimalBubble(x,y,layout,animalBubbles(drawnLivestock,lastAnimationNow,state,layout.camera.zoom));
     const animal=hitTestLivestock(x,y,layout,drawnLivestock);
     const target=animalBubble?.zoneId || animal?.zoneId || hitTestZone(x,y,layout)?.id;
     if(target){openZone(target);return;}
@@ -314,7 +314,7 @@ function bindCamera() {
   };
   const zoom = (factor, before, after = before) => {
     cameraTween=null;
-    const z = Math.max(WORLD.minZoom, Math.min(WORLD.maxZoom, camera.zoom * factor));
+    const z = Math.max(coverMinZoom(renderer.size.cssW, renderer.size.cssH), Math.min(WORLD.maxZoom, camera.zoom * factor));
     camera.x = after.x - (before.x - camera.x) * z / camera.zoom;
     camera.y = after.y - (before.y - camera.y) * z / camera.zoom;
     camera.zoom = z; sync();
@@ -442,7 +442,7 @@ function exposeDebug() {
     setDebugOverlay: flags => {for(const key of ['plots','walk'])if(key in flags)debugOverlay[key]=!!flags[key];return {...debugOverlay};},
     getDebugOverlay:()=>({...debugOverlay}),
     getUI:()=>({farmMode,trayOpen,chromeVisible,openZone:openZoneId}),
-    getAnimalBubbles:()=>animalBubbles(drawnLivestock,lastAnimationNow,state),
+    getAnimalBubbles:()=>animalBubbles(drawnLivestock,lastAnimationNow,state,layout.camera.zoom),
     getLivestockViews:()=>livestockViews(state,layout,lastAnimationNow),
     mapInput,
     isPortraitRotated,

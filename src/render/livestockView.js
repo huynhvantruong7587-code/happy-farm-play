@@ -4,6 +4,14 @@ import { drawAnchored, drawSprite } from './assets.js';
 import { fillRoundRect as rect, drawText } from './draw.js';
 
 import { MAP_LAYOUT } from './mapLayout.js';
+export const ANIMAL_BUBBLE_RADIUS=62;
+// Keep bubbles readable when the whole map is on screen (world size grows as zoom drops).
+export const ANIMAL_BUBBLE_MIN_SCREEN=24;
+export function bubbleWorldRadius(zoom=1){
+  const z=Math.max(0.05, Number(zoom)||1);
+  const screen=Math.min(ANIMAL_BUBBLE_RADIUS*1.2, Math.max(ANIMAL_BUBBLE_MIN_SCREEN, ANIMAL_BUBBLE_RADIUS*z));
+  return screen/z;
+}
 const SCALE=MAP_LAYOUT.ANIMAL_SCALE;
 export function zoneAttachment(z,key) {const p=z[key];return p?{x:p[0],y:p[1]}:null;}
 export function walkPolygon(z) {return z.walk || [];}
@@ -83,14 +91,15 @@ export function hitTestLivestock(x,y,layout,views) {
   return [...views].filter(v=>v.status!=='empty').sort((a,b)=>b.y-a.y).find(v=>{const {width,height}=animalSize(v.kind,v.zoneId==='pond');return Math.abs(x-v.x)<=width/2 && y>=v.y-(v.zoneId==='pond'?height/2:height) && y<=v.y+(v.zoneId==='pond'?height/2:0);})||null;
 }
 // One roof reminder per livestock building, sharing drawing and hit geometry.
-export function animalBubbles(views,t=0,state=null) {
+export function animalBubbles(views,t=0,state=null,zoom=1) {
   if(state)views=Object.entries(state.pens).flatMap(([zoneId,slots])=>slots.map((o,index)=>({...getOccupantView(o),zoneId,index})).filter(v=>v.status!=='empty'));
   const icons={chicken:'egg',sheep:'wool',pig:'pork',cow:'beef',pond:'fish'},bubbles=[];
+  const r=bubbleWorldRadius(zoom);
   for(const zoneId of Object.keys(icons)){
     const group=views.filter(v=>v.zoneId===zoneId),ready=group.filter(v=>v.status==='ready'),hungry=group.filter(v=>v.status==='hungry');
     const active=ready.length?ready:hungry;if(!active.length)continue;
-    const z=MAP_LAYOUT.ZONES[zoneId],roof=z.roof || {x:z.bounds.x+z.bounds.w/2,y:z.bounds.y},r=44;
-    const b={zoneId,index:null,aggregated:true,action:'open-zone',count:active.length,label:ready.length?'收获':'喂饲料',icon:`icons/${ready.length?icons[zoneId]:'feed'}.webp`,x:roof.x,y:roof.y-r-32,r,targetX:roof.x,targetY:roof.y-12};
+    const z=MAP_LAYOUT.ZONES[zoneId],roof=z.roof || {x:z.bounds.x+z.bounds.w/2,y:z.bounds.y};
+    const b={zoneId,index:null,aggregated:true,action:'open-zone',count:active.length,label:ready.length?'收获':'喂饲料',icon:`icons/${ready.length?icons[zoneId]:'feed'}.webp`,x:roof.x,y:roof.y-r-32,r,zoom,targetX:roof.x,targetY:roof.y-12};
     for(const other of bubbles)if(Math.abs(b.y-other.y)<r+other.r+8 && Math.abs(b.x-other.x)<r+other.r+12)b.x=other.x+r+other.r+12;
     bubbles.push(b);
   }
@@ -101,16 +110,21 @@ export function hitTestAnimalBubble(x,y,layout,bubbles) {
   return [...bubbles].reverse().find(b=>Math.hypot(x-b.x,y-b.y)<=b.r)||null;
 }
 function drawAnimalBubble(ctx,b) {
-  ctx.save();ctx.fillStyle='#f7e7c3';ctx.strokeStyle='#b38a58';ctx.lineWidth=2.5;
-  ctx.beginPath();ctx.moveTo(b.x-7,b.y+b.r-6);ctx.lineTo(b.x+Math.max(-35,Math.min(35,b.targetX-b.x)),b.targetY);ctx.lineTo(b.x+8,b.y+b.r-6);ctx.fill();ctx.stroke();
+  const z=Math.max(0.05, Number(b.zoom)||1);
+  const screen=b.r*z;
+  const s=b.r/62;
+  ctx.save();ctx.fillStyle='#f7e7c3';ctx.strokeStyle='#b38a58';ctx.lineWidth=Math.max(1.2,2.4*s);
+  ctx.beginPath();ctx.moveTo(b.x-7*s,b.y+b.r-6*s);ctx.lineTo(b.x+Math.max(-35*s,Math.min(35*s,b.targetX-b.x)),b.targetY);ctx.lineTo(b.x+8*s,b.y+b.r-6*s);ctx.fill();ctx.stroke();
   ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();ctx.stroke();
-  ctx.strokeStyle='rgba(255,250,228,.75)';ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.arc(b.x,b.y,b.r-4,0,Math.PI*2);ctx.stroke();
-  drawSprite(ctx,b.icon,b.x-24,b.y-30,48,48);
+  ctx.strokeStyle='rgba(255,250,228,.75)';ctx.lineWidth=Math.max(0.8,1.5*s);
+  ctx.beginPath();ctx.arc(b.x,b.y,Math.max(b.r-4*s,b.r*0.86),0,Math.PI*2);ctx.stroke();
+  const icon=Math.min(screen*1.35, 36)/z;
+  drawSprite(ctx,b.icon,b.x-icon/2,b.y-icon*0.58,icon,icon);
   if(b.aggregated){
-    rect(ctx,b.x-20,b.y+15,40,22,9,'#f7e7c3');
+    const tw=Math.min(Math.max(13, screen*0.55), 22)/z, th=tw*1.15, bw=tw*2.05;
+    rect(ctx,b.x-bw/2,b.y+b.r*0.22,bw,th,th*0.4,'#f7e7c3');
     ctx.strokeStyle='#b38a58';ctx.stroke();
-    drawText(ctx,`×${b.count}`,b.x,b.y+26,{size:16,color:'#603c20',weight:'800'});
+    drawText(ctx,`×${b.count}`,b.x,b.y+b.r*0.22+th*0.52,{size:tw,color:'#603c20',weight:'800'});
   }
   ctx.restore();
 }
@@ -131,21 +145,6 @@ export function drawLivestock(ctx,state,layout,t,now) {
   const views=livestockViews(state,layout,t,now);
   for(const v of views.filter(v=>v.status!=='empty').sort((a,b)=>a.y-b.y))animal(ctx,v,t);
   for(const front of Object.values(MAP_LAYOUT.FRONTS))drawSprite(ctx,front.file,front.x,front.y,front.w,front.h);
-  for(const b of animalBubbles(views,t,state))drawAnimalBubble(ctx,b);
-  for(const s of MAP_LAYOUT.SIGNS){
-    if(s.board)drawSprite(ctx,s.board.file,s.board.x,s.board.y,s.board.w,s.board.h);
-    ctx.save();ctx.translate(s.x+s.w/2,s.y+s.h/2);ctx.rotate((s.angle||0)*Math.PI/180);
-    const len=Math.max(1,[...s.text].length);
-    const heightFrac=s.h<50?0.84:0.48;
-    let size=Math.min(s.h*heightFrac,(s.w*.86)/len*1.05);
-    size=Math.max(9,Math.floor(size));
-    ctx.font=`700 ${size}px FarmSign`;
-    while(ctx.measureText(s.text).width>s.w*.90 && size>9){size--;ctx.font=`700 ${size}px FarmSign`;}
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillStyle='#e8cda0';ctx.fillText(s.text,-1,-1);
-    ctx.fillStyle='#2a160c';ctx.fillText(s.text,1,1);
-    ctx.fillStyle='#4a2c16';ctx.fillText(s.text,0,0);
-    ctx.restore();
-  }
+  for(const b of animalBubbles(views,t,state,layout.camera.zoom))drawAnimalBubble(ctx,b);
   return views;
 }
