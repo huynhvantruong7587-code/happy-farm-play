@@ -91,16 +91,62 @@ export function hitTestLivestock(x,y,layout,views) {
   return [...views].filter(v=>v.status!=='empty').sort((a,b)=>b.y-a.y).find(v=>{const {width,height}=animalSize(v.kind,v.zoneId==='pond');return Math.abs(x-v.x)<=width/2 && y>=v.y-(v.zoneId==='pond'?height/2:height) && y<=v.y+(v.zoneId==='pond'?height/2:0);})||null;
 }
 // One roof reminder per livestock building, sharing drawing and hit geometry.
-function clampBubbleToViewport(b,layout){
-  if(!layout||layout.cssW==null||!layout.camera)return b;
-  const {camera,cssW,cssH}=layout,z=Math.max(0.05,camera.zoom||1),r=b.r*z;
-  const padL=64,padR=80,padT=44,padB=10;
-  let sx=b.x*z+camera.x,sy=b.y*z+camera.y;
-  const minX=padL+r,maxX=cssW-padR-r,minY=padT+r,maxY=cssH-padB-r;
-  if(maxX>=minX)sx=Math.max(minX,Math.min(maxX,sx));
-  if(maxY>=minY)sy=Math.max(minY,Math.min(maxY,sy));
-  b.x=(sx-camera.x)/z;b.y=(sy-camera.y)/z;
-  return b;
+// A bubble stays on its own roof. It is never slid over another building or stacked
+// at a screen edge. Off-screen roofs are omitted, or shown as a tiny edge pip when
+// the roof is only just out of view. There is no leader line.
+function zoneSign(zoneId){const z=MAP_LAYOUT.ZONES[zoneId];return z&&z.labelBox?z.labelBox:null;}
+function bubbleFits(x,y,r,layout,pad){
+  const {camera,cssW,cssH}=layout,z=Math.max(0.05,camera.zoom||1);
+  const sx=x*z+camera.x,sy=y*z+camera.y,sr=r*z;
+  return sx-sr>=pad.l && sx+sr<=cssW-pad.r && sy-sr>=pad.t && sy+sr<=cssH-pad.b;
+}
+function circleHitsBox(x,y,r,box,pad=10){
+  if(!box)return false;
+  const cx=Math.max(box.x,Math.min(x,box.x+box.w)),cy=Math.max(box.y,Math.min(y,box.y+box.h));
+  return Math.hypot(x-cx,y-cy)<r+pad;
+}
+function clearsSign(x,y,r,zoneId){return !circleHitsBox(x,y,r,zoneSign(zoneId),10);}
+function placeRoofBubble(zoneId,r,layout){
+  const z=MAP_LAYOUT.ZONES[zoneId],roof=z.roof||{x:z.bounds.x+z.bounds.w/2,y:z.bounds.y};
+  const preferred={x:roof.x,y:roof.y-r-32};
+  if(!layout||layout.cssW==null||!layout.camera)return preferred;
+  const pad={l:56,r:76,t:44,b:8};
+  const sign=zoneSign(zoneId);
+  const maxCenterY=sign?sign.y-r-16:roof.y+160;
+  const onOwnRoof=y=>Math.abs(preferred.x-roof.x)<=180 && y>=roof.y-r-36 && y<=maxCenterY;
+  if(bubbleFits(preferred.x,preferred.y,r,layout,pad)&&clearsSign(preferred.x,preferred.y,r,zoneId))return preferred;
+  // Lower the bubble along this same roof (never slide sideways onto another building).
+  const {camera}=layout,zoom=Math.max(0.05,camera.zoom||1);
+  const step=8/zoom;
+  for(let y=preferred.y+step;y<=maxCenterY;y+=step){
+    if(onOwnRoof(y)&&clearsSign(preferred.x,y,r,zoneId)&&bubbleFits(preferred.x,y,r,layout,pad))return {x:preferred.x,y};
+  }
+  return null;
+}
+function placeEdgePip(zoneId,layout,existing){
+  if(!layout||layout.cssW==null||!layout.camera)return null;
+  const z=MAP_LAYOUT.ZONES[zoneId],roof=z.roof||{x:z.bounds.x+z.bounds.w/2,y:z.bounds.y};
+  const {camera,cssW,cssH}=layout,zoom=Math.max(0.05,camera.zoom||1);
+  const worldL=-camera.x/zoom,worldT=-camera.y/zoom,worldR=(cssW-camera.x)/zoom,worldB=(cssH-camera.y)/zoom;
+  const b=z.bounds;
+  if(b.x+b.w<worldL||b.x>worldR||b.y+b.h<worldT||b.y>worldB)return null;
+  const pad={l:56,r:76,t:44,b:8};
+  let sx=roof.x*zoom+camera.x,sy=roof.y*zoom+camera.y;
+  // Only hint when the roof is just off the safe viewport, not across the map.
+  const near=48;
+  if(!(sx>=-near&&sx<=cssW+near&&sy>=-near&&sy<=cssH+near))return null;
+  const er=11/zoom;
+  const esr=er*zoom;
+  sx=Math.max(pad.l+esr,Math.min(cssW-pad.r-esr,sx));
+  sy=Math.max(pad.t+esr,Math.min(cssH-pad.b-esr,sy));
+  const x=(sx-camera.x)/zoom,y=(sy-camera.y)/zoom;
+  // Hide rather than cover this building's name sign or stack on another bubble.
+  if(!clearsSign(x,y,er,zoneId))return null;
+  if(Math.hypot(x-roof.x,y-roof.y)>260)return null;
+  for(const o of existing){
+    if(Math.hypot(x-o.x,y-o.y)<er+o.r+8)return null;
+  }
+  return {x,y,r:er};
 }
 export function animalBubbles(views,t=0,state=null,zoom=1,layout=null) {
   if(state)views=Object.entries(state.pens).flatMap(([zoneId,slots])=>slots.map((o,index)=>({...getOccupantView(o),zoneId,index})).filter(v=>v.status!=='empty'));
@@ -110,10 +156,20 @@ export function animalBubbles(views,t=0,state=null,zoom=1,layout=null) {
     const group=views.filter(v=>v.zoneId===zoneId),ready=group.filter(v=>v.status==='ready'),hungry=group.filter(v=>v.status==='hungry');
     const active=ready.length?ready:hungry;if(!active.length)continue;
     const z=MAP_LAYOUT.ZONES[zoneId],roof=z.roof || {x:z.bounds.x+z.bounds.w/2,y:z.bounds.y};
-    const b={zoneId,index:null,aggregated:true,action:'open-zone',count:active.length,label:ready.length?'收获':'喂饲料',icon:`icons/${ready.length?icons[zoneId]:'feed'}.webp`,x:roof.x,y:roof.y-r-32,r,zoom,targetX:roof.x,targetY:roof.y-12};
-    for(const other of bubbles)if(Math.abs(b.y-other.y)<r+other.r+8 && Math.abs(b.x-other.x)<r+other.r+12)b.x=other.x+r+other.r+12;
-    clampBubbleToViewport(b,layout);
-    bubbles.push(b);
+    const icon=`icons/${ready.length?icons[zoneId]:'feed'}.webp`;
+    const base={zoneId,index:null,aggregated:true,action:'open-zone',count:active.length,label:ready.length?'收获':'喂饲料',icon,zoom,targetX:roof.x,targetY:roof.y-12};
+    const placed=placeRoofBubble(zoneId,r,layout);
+    if(placed){
+      bubbles.push({...base,...placed,r});
+      continue;
+    }
+    // Tests and callers without a layout still get a roof-anchored bubble.
+    if(!layout||layout.cssW==null||!layout.camera){
+      bubbles.push({...base,x:roof.x,y:roof.y-r-32,r});
+      continue;
+    }
+    const pip=placeEdgePip(zoneId,layout,bubbles);
+    if(pip)bubbles.push({...base,...pip,edge:true,aggregated:false});
   }
   return bubbles;
 }
@@ -125,14 +181,13 @@ function drawAnimalBubble(ctx,b) {
   const z=Math.max(0.05, Number(b.zoom)||1);
   const screen=b.r*z;
   const s=b.r/62;
-  ctx.save();ctx.fillStyle='#f7e7c3';ctx.strokeStyle='#b38a58';ctx.lineWidth=Math.max(1.2,2.4*s);
-  ctx.beginPath();ctx.moveTo(b.x-7*s,b.y+b.r-6*s);ctx.lineTo(b.x+Math.max(-35*s,Math.min(35*s,b.targetX-b.x)),b.targetY);ctx.lineTo(b.x+8*s,b.y+b.r-6*s);ctx.fill();ctx.stroke();
+  ctx.save();ctx.fillStyle='#f7e7c3';ctx.strokeStyle='#b38a58';ctx.lineWidth=Math.max(1.1,2.4*s);
   ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();ctx.stroke();
-  ctx.strokeStyle='rgba(255,250,228,.75)';ctx.lineWidth=Math.max(0.8,1.5*s);
+  ctx.strokeStyle='rgba(255,250,228,.75)';ctx.lineWidth=Math.max(0.7,1.5*s);
   ctx.beginPath();ctx.arc(b.x,b.y,Math.max(b.r-4*s,b.r*0.86),0,Math.PI*2);ctx.stroke();
-  const icon=Math.min(screen*1.35, 36)/z;
-  drawSprite(ctx,b.icon,b.x-icon/2,b.y-icon*0.58,icon,icon);
-  if(b.aggregated){
+  const icon=Math.min(screen*(b.edge?1.15:1.35), b.edge?18:36)/z;
+  drawSprite(ctx,b.icon,b.x-icon/2,b.y-icon*(b.edge?0.5:0.58),icon,icon);
+  if(b.aggregated && !b.edge){
     const tw=Math.min(Math.max(13, screen*0.55), 22)/z, th=tw*1.15, bw=tw*2.05;
     rect(ctx,b.x-bw/2,b.y+b.r*0.22,bw,th,th*0.4,'#f7e7c3');
     ctx.strokeStyle='#b38a58';ctx.stroke();

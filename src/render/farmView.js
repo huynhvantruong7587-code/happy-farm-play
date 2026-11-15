@@ -53,18 +53,27 @@ export function fieldCamera(layout){
   const house=layout.zones.find(z=>z.id==='house').bounds;
   const sign=MAP_LAYOUT.SIGNS.find(s=>s.id==='house');
   const left=70,right=88,top=48,bottom=90;
-  const b={x:field.x-16,y:field.y-20,w:field.w+32,h:field.h+40};
-  let zoom=Math.max(WORLD.minZoom,Math.min(.85,(layout.cssW-left-right)/b.w,(layout.cssH-top-bottom)/b.h));
-  // Keep the cottage and its sign to the right of the shop button, even at x=0.
-  const hideAt=sign?sign.x:house.x;
-  zoom=Math.max(zoom,layout.cssW/Math.max(1,hideAt-8));
-  let x=left+(layout.cssW-left-right-b.w*zoom)/2-b.x*zoom;
-  let y=top+(layout.cssH-top-bottom-b.h*zoom)/2-b.y*zoom;
-  const maxRight=house.x-8;
-  if((layout.cssW-x)/zoom>maxRight)x=layout.cssW-maxRight*zoom;
-  const minLeft=field.x;
-  if(-x/zoom>minLeft)x=-minLeft*zoom+left;
+  const signR=sign?sign.x+sign.w:house.x+Math.min(house.w,420);
+  const signT=sign?sign.y:house.y;
+  const x0=field.x-16, y0=Math.min(field.y,signT)-20;
+  const x1=Math.max(field.x+field.w,signR)+20, y1=field.y+field.h+40;
+  let zoom=Math.max(WORLD.minZoom,Math.min(.85,(layout.cssW-left-right)/Math.max(1,x1-x0),(layout.cssH-top-bottom)/Math.max(1,y1-y0)));
+  let x=left-x0*zoom;
+  let y=top+(layout.cssH-top-bottom-(y1-y0)*zoom)/2-y0*zoom;
   const target={zoom,x,y};
+  for(let i=0;i<8;i++){
+    clampCamera(target,layout.cssW,layout.cssH);
+    const sr=signR*target.zoom+target.x;
+    const limit=layout.cssW-right+4;
+    if(sr<=limit)break;
+    const need=sr-limit;
+    const nextX=target.x-need;
+    const minX=layout.cssW-WORLD.w*target.zoom;
+    if(nextX>=minX){target.x=nextX;continue;}
+    // Not enough pan room: zoom out so the sign fits left of the shop button.
+    target.zoom=Math.max(WORLD.minZoom,(layout.cssW-right-4)/Math.max(1,signR+8));
+    target.x=left-x0*target.zoom;
+  }
   clampCamera(target,layout.cssW,layout.cssH);
   return target;
 }
@@ -105,13 +114,16 @@ export function hitTestPlot(x, y, layout) {
 }
 // Return world sizes with readable, bounded CSS sizes after camera scaling.
 export function plotIndicatorSizes(zoom) {
-  const bounded = (size, min, max) => Math.min(max, Math.max(min, size * zoom)) / zoom;
+  const z=Math.max(0.05, Number(zoom)||1);
+  const bounded = (size, min, max) => Math.min(max, Math.max(min, size * z)) / z;
   return {
-    font: bounded(8, 7.5, 11),
+    font: 12 / z,
+    pillW: 52 / z,
+    pillH: 18 / z,
     barWidth: bounded(34, 28, 46),
     barHeight: bounded(3.2, 2.6, 4),
     sparkle: bounded(8, 3.2, 9),
-    gap: 2 / zoom,
+    gap: 3 / z,
     stroke: bounded(1.4, 1.1, 2),
   };
 }
@@ -126,6 +138,32 @@ function drawStarSparkle(ctx,x,y,r,alpha){
   }
   ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
 }
+
+export function drawSigns(ctx) {
+  for (const s of MAP_LAYOUT.SIGNS) {
+    ctx.save();
+    ctx.translate(s.x + s.w / 2, s.y + s.h / 2);
+    ctx.rotate((s.angle || 0) * Math.PI / 180);
+    const len = Math.max(1, [...s.text].length);
+    let size = Math.min(s.h * 0.64, (s.w * 0.80) / len * 1.05);
+    size = Math.max(10, Math.floor(size));
+    ctx.font = `700 ${size}px FarmSign`;
+    while (ctx.measureText(s.text).width > s.w * 0.84 && size > 10) {
+      size -= 1;
+      ctx.font = `700 ${size}px FarmSign`;
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#f3ddb4';
+    ctx.fillText(s.text, -1.15, -1.15);
+    ctx.fillStyle = '#2a160c';
+    ctx.fillText(s.text, 1.2, 1.2);
+    ctx.fillStyle = '#5a3218';
+    ctx.fillText(s.text, 0, 0);
+    ctx.restore();
+  }
+}
+
 export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 0, selectedPlotIndex = -1, debugOverlay={}, farmerAnimation={} } = {}) {
   const { cssW, cssH, camera, plots } = layout;
   const indicator = plotIndicatorSizes(camera.zoom);
@@ -172,16 +210,20 @@ export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 
         drawStarSparkle(ctx,pt.x,pt.y-height*.82,indicator.sparkle,twinkle);
       }
     } else {
-      const {barWidth,barHeight,font,gap}=indicator;
+      const {pillW,pillH,font,gap}=indicator;
       const backY=Math.min(...corners.map(c=>c[1]));
-      // Sit the tidy timer just inside this bed's back edge so it does not cover the plot above.
-      const x=p.cx-barWidth/2,y=backY+gap;
-      fillRoundRect(ctx,x,y,barWidth,barHeight,barHeight/2,'#593c2e');
-      fillRoundRect(ctx,x,y,barWidth*view.progress,barHeight,barHeight/2,'#a9e873');
-      drawText(ctx,formatMs(view.remainingMs),p.cx,y-gap-font*0.45,{size:font,color:'#fff7df',shadow:true});
+      // Cream pill with dark text, parked on this bed's back edge so it stays off the neighbours.
+      const x=p.cx-pillW/2,y=backY+gap;
+      fillRoundRect(ctx,x,y,pillW,pillH,pillH/2,'#f6e4c4');
+      ctx.strokeStyle='#c4a06a';ctx.lineWidth=Math.max(1,indicator.stroke);ctx.stroke();
+      const barPad=pillW*0.08, barH=Math.max(2,pillH*0.14);
+      fillRoundRect(ctx,x+barPad,y+pillH-barH-barPad,pillW-barPad*2,barH,barH/2,'#e2c89a');
+      fillRoundRect(ctx,x+barPad,y+pillH-barH-barPad,(pillW-barPad*2)*view.progress,barH,barH/2,'#7dbd4e');
+      drawText(ctx,formatMs(view.remainingMs),p.cx,y+pillH*0.44,{size:font,color:'#3a2414',weight:'800'});
     }
   }
   drawLivestock(ctx,state,layout,animationNow,now);
+  drawSigns(ctx);
   if(state.farmer)drawFarmer(ctx,state.farmer,{...farmerAnimation,time:animationNow});
   if(debugOverlay.plots)for(const p of plots){
     ctx.beginPath();ctx.rect(p.x,p.y,p.w,p.h);ctx.strokeStyle='#ff357a';ctx.lineWidth=2;ctx.stroke();
