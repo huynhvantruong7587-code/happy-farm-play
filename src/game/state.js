@@ -1,3 +1,4 @@
+import { farmerStart } from '../render/farmerView.js';
 import { ensureMarket } from './systems/market.js';
 import { GAME, CROPS, ANIMALS, PRODUCTS, PEN_ZONES } from './config.js';
 
@@ -16,6 +17,7 @@ export function createInitialState(now = Date.now()) {
   Object.assign(seeds, GAME.startSeeds);
   const state = {
     version: GAME.version,
+    farmer: farmerStart(),
     coins: GAME.startCoins,
     xp: 0,
     level: 1,
@@ -73,6 +75,7 @@ export function normalizeState(raw, now = Date.now()) {
     })]));
   for (const counts of [state.stock,state.inventory]) for (const k of Object.keys(counts))
     counts[k] = Math.max(0,Math.floor(Number(counts[k]) || 0));
+  state.farmer=Number.isFinite(raw.farmer?.x)&&Number.isFinite(raw.farmer?.y)?{x:raw.farmer.x,y:raw.farmer.y}:farmerStart();
   ensureMarket(state,now);
   state.version = GAME.version;
   state.coins = Math.max(0, Math.floor(Number(state.coins) || 0));

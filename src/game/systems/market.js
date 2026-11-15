@@ -10,9 +10,10 @@ export function createCustomer(now=Date.now(), random=Math.random) {
 export function ensureMarket(state,now=Date.now()) {
   if(!state.market || !Array.isArray(state.market.customers)){
     let seed=(now>>>0)||1;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
-    state.market={customers:Array.from({length:3},()=>createCustomer(now,random)),nextArrivalAt:0};
+    state.market={customers:Array.from({length:10},()=>createCustomer(now,random)),nextArrivalAt:0};
   }
-  state.market.customers=Array.from({length:3},(_,i)=>state.market.customers[i]||null);
+  const previous=state.market.customers;
+  state.market.customers=Array.from({length:10},(_,i)=>i<previous.length?previous[i]||null:createCustomer(now));
   return state.market;
 }
 export function tickMarket(state,now=Date.now(),random=Math.random) {

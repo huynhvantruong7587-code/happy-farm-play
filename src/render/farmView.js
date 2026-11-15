@@ -1,3 +1,4 @@
+import { drawFarmer } from './farmerView.js';
 import { makeZones, drawLivestock, walkPolygon } from './livestockView.js';
 import { drawAnchored } from './assets.js';
 import { drawScenery } from './scenery.js';
@@ -35,11 +36,13 @@ function fitCamera(layout,b,left=12,right=12) {
   return target;
 }
 export function cameraForZone(layout, id) {
-  if(id==='house' || id==='farm')return homeCamera(layout);
+  if(id==='house')return homeCamera(layout);
+  if(id==='farm')return fieldCamera(layout);
   const b=zoneBounds(layout,id);
   if(!b)return null;
   return fitCamera(layout,b,id==='farm'?64:12,id==='farm'?80:id==='pig'?200:56);
 }
+export function fieldCamera(layout){const b=zoneBounds(layout,'farm');return fitCamera({...layout,cssH:Math.max(160,layout.cssH-82)},{x:b.x-35,y:b.y-35,w:b.w+70,h:b.h+100},70,85);}
 // Frame the cottage and all field beds, reserving the left navigation strip.
 export function homeCamera(layout) {
   const field=zoneBounds(layout,'farm'),house=layout.zones.find(z=>z.id==='house').bounds;
@@ -87,7 +90,7 @@ export function plotIndicatorSizes(zoom) {
     stroke: bounded(2, 1.5, 2.5),
   };
 }
-export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 0, selectedPlotIndex = -1, debugOverlay={} } = {}) {
+export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 0, selectedPlotIndex = -1, debugOverlay={}, farmerAnimation={} } = {}) {
   const { cssW, cssH, camera, plots } = layout;
   const indicator = plotIndicatorSizes(camera.zoom);
   // Green edges cover any viewport area outside the painted world.
@@ -99,7 +102,7 @@ export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 
     if (selectedPlotIndex===p.index && p.poly) {
       ctx.beginPath();
       p.poly.forEach(([x,y],i)=>{x=p.cx+(x-p.cx)*.96;y=p.cy+(y-p.cy)*.96;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
-      ctx.closePath();ctx.strokeStyle='#ffe7a1';ctx.lineWidth=2.8;ctx.stroke();
+      ctx.closePath();ctx.save();ctx.shadowColor='rgba(218,153,49,.85)';ctx.shadowBlur=22;ctx.fillStyle='rgba(226,170,65,.32)';ctx.fill();ctx.restore();
     }
     if(view.status==='empty') continue;
     const ripe=view.status==='ripe';
@@ -140,6 +143,7 @@ export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 
     }
   }
   drawLivestock(ctx,state,layout,animationNow,now);
+  if(state.farmer)drawFarmer(ctx,state.farmer,{...farmerAnimation,time:animationNow});
   if(debugOverlay.plots)for(const p of plots){
     ctx.beginPath();ctx.rect(p.x,p.y,p.w,p.h);ctx.strokeStyle='#ff357a';ctx.lineWidth=2;ctx.stroke();
     ctx.beginPath();ctx.arc(p.cx,p.cy,3,0,Math.PI*2);ctx.fillStyle='#ff357a';ctx.fill();

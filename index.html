@@ -67,6 +67,7 @@
         <h2>商店</h2>
         <p>购买种子、幼畜鱼苗和饲料，回到地图放置与喂养</p>
       </header>
+      <nav class="shop-tabs" aria-label="商店分类"><button data-shop-tab="seeds">种子</button><button data-shop-tab="animals">动物</button><button data-shop-tab="feed">饲料</button></nav>
       <div id="shop-list" class="card-list"></div>
     </section>
 
@@ -76,8 +77,8 @@
         <h2>仓库</h2>
         <p>保存收获的作物、畜产品和鱼肉，前往集市交易</p>
       </header>
-      <p id="bag-empty" class="empty-hint">仓库暂无产品，去农田、围栏或鱼塘收获吧</p>
-      <div id="bag-list" class="card-list"></div>
+      <div class="sheet-body"><p id="bag-empty" class="empty-hint">仓库暂无产品，去农田、围栏或鱼塘收获吧</p>
+      <div id="bag-list" class="card-list"></div></div>
     </section>
 
     <section id="panel-more" class="sheet hidden" role="dialog" aria-label="更多">
@@ -86,11 +87,11 @@
         <h2>更多</h2>
         <p>农场会一点点长大</p>
       </header>
-      <div class="more-block">
+      <div class="sheet-body"><div class="more-block">
         <h3>怎么玩</h3>
         <ol class="howto">
           <li>在商店购买种子和幼畜，仓库保存收获，集市出售产品。</li>
-          <li>点击农田展开种子栏，选中种子后点地块种植；点击空地收起。</li>
+          <li>点击农田进入耕作模式，再点地块种植或收获；点击田外退出并行走。</li>
           <li>作物按真实时间生长，关掉页面也会继续成熟。</li>
           <li>成熟后点击地块收获，前往集市卖给客人换金币。</li>
           <li>收获获得经验，升级后逐步解锁更多作物。</li>
@@ -114,12 +115,13 @@
         <button type="button" id="btn-reset" class="btn btn-danger">重新开始</button>
         <p id="version-label" class="version">版本 1.0 · MVP</p>
       </div>
+      </div>
     </section>
 
     <div id="panel-animal" class="animal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="animal-title">
       <section class="animal-panel">
-        <button id="btn-close-animal" class="sheet-close" type="button" aria-label="关闭动物面板">×</button>
-        <h2 id="animal-title"></h2><p id="animal-inventory"></p>
+        <header class="animal-head"><button id="animal-buy" class="pill-primary">购买</button><button id="btn-close-animal" class="sheet-close" type="button" aria-label="关闭动物面板">×</button>
+        <h2 id="animal-title"></h2><p id="animal-inventory"></p></header>
         <div id="animal-slots"></div>
       </section>
     </div>
@@ -127,11 +129,11 @@
 
     <div id="panel-mill" class="modal hidden" role="dialog" aria-modal="true" aria-label="饲料加工厂">
       <div class="modal-card">
-        <h2>⚙️ 饲料加工厂</h2>
-        <p id="mill-inventory"></p>
+        <header class="mill-head"><button type="button" id="btn-close-mill" class="sheet-close" aria-label="关闭加工厂">×</button><h2>⚙️ 饲料加工厂</h2>
+        <p id="mill-inventory"></p></header><div class="mill-body">
         <div class="recipe-row"><div data-recipe="wheat"></div><button type="button" class="pill-primary" data-mill-material="wheat">制作</button></div>
         <div class="recipe-row"><div data-recipe="corn"></div><button type="button" class="pill-primary" data-mill-material="corn">制作</button></div>
-        <button type="button" id="btn-close-mill" class="pill-secondary">关闭</button>
+        </div>
       </div>
     </div>
     <div id="modal-levelup" class="modal hidden" role="dialog" aria-modal="true" aria-label="升级">

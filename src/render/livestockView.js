@@ -82,66 +82,17 @@ export function hitTestLivestock(x,y,layout,views) {
   const c=layout.camera;x=(x-c.x)/c.zoom;y=(y-c.y)/c.zoom;
   return [...views].filter(v=>v.status!=='empty').sort((a,b)=>b.y-a.y).find(v=>{const {width,height}=animalSize(v.kind,v.zoneId==='pond');return Math.abs(x-v.x)<=width/2 && y>=v.y-(v.zoneId==='pond'?height/2:height) && y<=v.y+(v.zoneId==='pond'?height/2:0);})||null;
 }
-// Yard candidates are static; avoid scanning the map again on every animation frame.
-const reminderYards=new Map();
-// Shared world-space geometry keeps drawing and rotated-canvas input aligned.
-export function animalBubbles(views,t=0) {
-  const icons={chicken:'egg',sheep:'wool',pig:'pork',cow:'beef'};
-  const bubbles=[];
-  const overlaps=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r+6;
-  for(const zoneId of new Set(views.map(v=>v.zoneId))){
-    const ready=views.filter(v=>v.zoneId===zoneId && v.status==='ready');
-    if(!ready.length)continue;
-    const zone=MAP_LAYOUT.ZONES[zoneId],r=27;
-    // Keeping the whole reminder inside the walkable yard excludes roofs and walls.
-    const inYard=b=>!zone || Array.from({length:16},(_,i)=>{
-      const angle=i*Math.PI/8;
-      return inside(b.x+Math.cos(angle)*(r+6),b.y+Math.sin(angle)*(r+6),zone.walk);
-    }).every(Boolean);
-    const placed=[];
-    for(const v of ready){
-      const {height}=animalSize(v.kind,zoneId==='pond');
-      const base={zoneId,index:v.index,action:'open-zone',count:1,
-        icon:`icons/${zoneId==='pond'?'fish':icons[v.kind]}.webp`,
-        x:v.x,y:v.y-height*(zoneId==='pond'?.5:1)-r-12+Math.sin(t/650+v.index)*2,r,
-        targetX:v.x,targetY:v.y-height*(zoneId==='pond'?.5:1)};
-      let candidate=null;
-      for(const dy of [0,8,-8])for(const dx of [0,-20,20,-40,40]){
-        if(candidate)continue;
-        const b={...base,x:base.x+dx,y:base.y+dy};
-        const ownDistance=Math.hypot(b.x-base.targetX,b.y-base.targetY);
-        const associated=views.filter(a=>a.zoneId===zoneId && a.status!=='empty' && a.index!==v.index).every(a=>{
-          const size=animalSize(a.kind,zoneId==='pond');
-          return ownDistance<Math.hypot(b.x-a.x,b.y-(a.y-size.height*(zoneId==='pond'?.5:1)));
-        });
-        if(associated && inYard(b) && ![...bubbles,...placed].some(a=>overlaps(a,b)))candidate=b;
-      }
-      if(!candidate)break;
-      placed.push(candidate);
-    }
-    if(placed.length===ready.length){bubbles.push(...placed);continue;}
-    // A single zone reminder belongs in the open yard, in front of the building.
-    const x=ready.reduce((n,v)=>n+v.x/ready.length,0),y=ready.reduce((n,v)=>n+v.y/ready.length,0)-45;
-    const b={zoneId,index:null,action:'open-zone',aggregated:true,count:ready.length,
-      icon:`icons/${zoneId==='pond'?'fish':icons[ready[0].kind]}.webp`,x,y,r,targetX:x,targetY:y+45};
-    if(!reminderYards.has(zoneId)){
-      const points=[];
-      for(let cy=zone.bounds.y;cy<=zone.bounds.y+zone.bounds.h;cy+=8){
-        for(let cx=zone.bounds.x;cx<=zone.bounds.x+zone.bounds.w;cx+=8){
-          if(inYard({x:cx,y:cy}))points.push({x:cx,y:cy});
-        }
-      }
-      reminderYards.set(zoneId,points);
-    }
-    let best=null,distance=Infinity;
-    for(const point of reminderYards.get(zoneId)){
-      const d=(point.x-x)**2+(point.y-y)**2;
-      if(d<distance){
-        const candidate={...b,...point};
-        if(!bubbles.some(a=>overlaps(a,candidate))){best=candidate;distance=d;}
-      }
-    }
-    const shown=best||b;shown.targetX=shown.x;shown.targetY=shown.y+45;bubbles.push(shown);
+// One roof reminder per livestock building, sharing drawing and hit geometry.
+export function animalBubbles(views,t=0,state=null) {
+  if(state)views=Object.entries(state.pens).flatMap(([zoneId,slots])=>slots.map((o,index)=>({...getOccupantView(o),zoneId,index})).filter(v=>v.status!=='empty'));
+  const icons={chicken:'egg',sheep:'wool',pig:'pork',cow:'beef',pond:'fish'},bubbles=[];
+  for(const zoneId of Object.keys(icons)){
+    const group=views.filter(v=>v.zoneId===zoneId),ready=group.filter(v=>v.status==='ready'),hungry=group.filter(v=>v.status==='hungry');
+    const active=ready.length?ready:hungry;if(!active.length)continue;
+    const z=MAP_LAYOUT.ZONES[zoneId],roof=z.roof || {x:z.bounds.x+z.bounds.w/2,y:z.bounds.y},r=44;
+    const b={zoneId,index:null,aggregated:true,action:'open-zone',count:active.length,label:ready.length?'收获':'喂饲料',icon:`icons/${ready.length?icons[zoneId]:'feed'}.webp`,x:roof.x,y:roof.y-r-32,r,targetX:roof.x,targetY:roof.y-12};
+    for(const other of bubbles)if(Math.abs(b.y-other.y)<r+other.r+8 && Math.abs(b.x-other.x)<r+other.r+12)b.x=other.x+r+other.r+12;
+    bubbles.push(b);
   }
   return bubbles;
 }
@@ -151,15 +102,15 @@ export function hitTestAnimalBubble(x,y,layout,bubbles) {
 }
 function drawAnimalBubble(ctx,b) {
   ctx.save();ctx.fillStyle='#f7e7c3';ctx.strokeStyle='#b38a58';ctx.lineWidth=2.5;
-  ctx.beginPath();ctx.moveTo(b.x-7,b.y+22);ctx.lineTo(b.x+Math.max(-35,Math.min(35,b.targetX-b.x)),b.y+35);ctx.lineTo(b.x+8,b.y+22);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(b.x-7,b.y+b.r-6);ctx.lineTo(b.x+Math.max(-35,Math.min(35,b.targetX-b.x)),b.targetY);ctx.lineTo(b.x+8,b.y+b.r-6);ctx.fill();ctx.stroke();
   ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();ctx.stroke();
   ctx.strokeStyle='rgba(255,250,228,.75)';ctx.lineWidth=1.5;
   ctx.beginPath();ctx.arc(b.x,b.y,b.r-4,0,Math.PI*2);ctx.stroke();
-  drawSprite(ctx,b.icon,b.x-17,b.y-17,34,34);
+  drawSprite(ctx,b.icon,b.x-24,b.y-30,48,48);
   if(b.aggregated){
-    rect(ctx,b.x+7,b.y+10,34,22,9,'#f7e7c3');
+    rect(ctx,b.x-20,b.y+15,40,22,9,'#f7e7c3');
     ctx.strokeStyle='#b38a58';ctx.stroke();
-    drawText(ctx,`×${b.count}`,b.x+24,b.y+21,{size:16,color:'#603c20',weight:'800'});
+    drawText(ctx,`×${b.count}`,b.x,b.y+26,{size:16,color:'#603c20',weight:'800'});
   }
   ctx.restore();
 }
@@ -180,12 +131,20 @@ export function drawLivestock(ctx,state,layout,t,now) {
   const views=livestockViews(state,layout,t,now);
   for(const v of views.filter(v=>v.status!=='empty').sort((a,b)=>a.y-b.y))animal(ctx,v,t);
   for(const front of Object.values(MAP_LAYOUT.FRONTS))drawSprite(ctx,front.file,front.x,front.y,front.w,front.h);
-  for(const b of animalBubbles(views,t))drawAnimalBubble(ctx,b);
+  for(const b of animalBubbles(views,t,state))drawAnimalBubble(ctx,b);
   for(const s of MAP_LAYOUT.SIGNS){
     ctx.save();ctx.translate(s.x+s.w/2,s.y+s.h/2);ctx.rotate((s.angle||0)*Math.PI/180);
-    let size=Math.max(10,s.h*.70);ctx.font=`700 ${size}px FarmSign`;
-    while(ctx.measureText(s.text).width>s.w*.76 && size>10){size--;ctx.font=`700 ${size}px FarmSign`;}
-    ctx.fillStyle='#5a3a1a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s.text,0,0);ctx.restore();
+    const len=Math.max(1,[...s.text].length);
+    const heightFrac=s.h<50?0.84:0.48;
+    let size=Math.min(s.h*heightFrac,(s.w*.86)/len*1.05);
+    size=Math.max(9,Math.floor(size));
+    ctx.font=`700 ${size}px FarmSign`;
+    while(ctx.measureText(s.text).width>s.w*.90 && size>9){size--;ctx.font=`700 ${size}px FarmSign`;}
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#e8cda0';ctx.fillText(s.text,-1,-1);
+    ctx.fillStyle='#2a160c';ctx.fillText(s.text,1,1);
+    ctx.fillStyle='#4a2c16';ctx.fillText(s.text,0,0);
+    ctx.restore();
   }
   return views;
 }

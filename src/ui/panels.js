@@ -4,12 +4,12 @@ const itemIcon = item => item.id==='hide'
   ? '<svg viewBox="0 0 52 52" width="44" height="44" aria-label="牛皮"><path d="M16 5 Q26 12 36 5 L45 15 Q35 22 45 38 L35 46 Q26 38 17 46 L7 38 Q17 23 7 15 Z" fill="#a46a3e" stroke="#654128" stroke-width="3"/><path d="M18 12 Q26 17 34 12 L38 17 Q31 25 38 36 L34 39 Q26 33 18 39 L14 35 Q21 25 14 18 Z" fill="none" stroke="#e5bb7b" stroke-width="1.5" stroke-dasharray="3 2"/></svg>'
   : item.emoji;
 
-export function renderShop(state, { onBuy, onYoung, onFeed, onCraft }) {
+export function renderShop(state, { onBuy, onYoung, onFeed, onCraft, tab = 'seeds' }) {
   const list = document.getElementById('shop-list');
   if (!list) return;
   list.innerHTML = '';
-  list.insertAdjacentHTML('beforeend','<h3 class=shop-section>种子</h3>');
-  for (const crop of CROP_LIST) {
+
+  for (const crop of tab==='seeds'?CROP_LIST:[]) {
     const locked = !isUnlocked(state, crop.id);
     const unaffordable = state.coins < crop.seedCost;
     const card = document.createElement('article');
@@ -31,19 +31,19 @@ export function renderShop(state, { onBuy, onYoung, onFeed, onCraft }) {
     btn.addEventListener('click', () => onBuy(crop.id));
     list.appendChild(card);
   }
-  list.insertAdjacentHTML('beforeend','<h3 id="shop-young" class=shop-section>幼畜与鱼苗</h3>');
-  for(const a of Object.values(ANIMALS)) {
+
+  for(const a of tab==='animals'?Object.values(ANIMALS):[]) {
     const locked=state.level<a.unlockLevel, disabled=locked || state.coins<a.cost;
     const card=document.createElement('article');card.className='card';
     card.innerHTML=`<div class="card-emoji">${a.emoji}</div><div class="card-body"><h3>${a.name}</h3><p class="meta">${a.cost} 金币 · 喂食后 ${formatGrowTime(a.growMs)}</p><p class="meta">携带 ${state.stock[a.id]} · ${a.unlockLevel} 级解锁</p></div><button class="btn btn-buy" ${disabled?'disabled':''}>${locked?'未解锁':disabled?'金币不足':'购买'}</button>`;
     card.querySelector('button').onclick=()=>onYoung(a.id);list.append(card);
   }
-  list.insertAdjacentHTML('beforeend','<h3 class=shop-section>饲料</h3>');
-  for(const [label,disabled,action] of [
+
+  for(const [label,disabled,action] of (tab==='feed'?[
     [`购买饲料 · ${FEED.cost} 金币`,state.coins<FEED.cost,onFeed],
     ['小麦×2 → 饲料×1',state.inventory.wheat<2,()=>onCraft('wheat')],
     ['玉米×1 → 饲料×1',state.inventory.corn<1,()=>onCraft('corn')],
-  ]) {
+  ]:[])) {
     const card=document.createElement('article');card.className='card';
     card.innerHTML=`<div class="card-emoji">🥣</div><div class="card-body"><h3>${label}</h3><p class="meta">拥有饲料 ${state.inventory.feed}${disabled?(label.startsWith('购买')?' · 金币不足':' · 材料不足'):''}</p></div><button class="btn btn-buy" ${disabled?'disabled':''}>${label.startsWith('购买')?'购买':'制作'}</button>`;
     card.querySelector('button').onclick=action;list.append(card);

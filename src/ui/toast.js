@@ -1,6 +1,6 @@
 const root = () => document.getElementById('toasts');
 
-export function toast(message, { timeout = 2200 } = {}) {
+export function toast(message, { timeout = 3200, action, onClick } = {}) {
   const host = root();
   if (!host) return;
   while (host.children.length >= 2) host.firstElementChild.remove();
@@ -13,6 +13,7 @@ export function toast(message, { timeout = 2200 } = {}) {
   const label = document.createElement('span');
   label.textContent = message;
   el.append(icon, label);
+  if(action){const button=document.createElement('button');button.textContent=action;button.onclick=()=>{el.remove();onClick?.();};el.append(button);}
   host.appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));
   setTimeout(() => {
