@@ -91,7 +91,18 @@ export function hitTestLivestock(x,y,layout,views) {
   return [...views].filter(v=>v.status!=='empty').sort((a,b)=>b.y-a.y).find(v=>{const {width,height}=animalSize(v.kind,v.zoneId==='pond');return Math.abs(x-v.x)<=width/2 && y>=v.y-(v.zoneId==='pond'?height/2:height) && y<=v.y+(v.zoneId==='pond'?height/2:0);})||null;
 }
 // One roof reminder per livestock building, sharing drawing and hit geometry.
-export function animalBubbles(views,t=0,state=null,zoom=1) {
+function clampBubbleToViewport(b,layout){
+  if(!layout||layout.cssW==null||!layout.camera)return b;
+  const {camera,cssW,cssH}=layout,z=Math.max(0.05,camera.zoom||1),r=b.r*z;
+  const padL=64,padR=80,padT=44,padB=10;
+  let sx=b.x*z+camera.x,sy=b.y*z+camera.y;
+  const minX=padL+r,maxX=cssW-padR-r,minY=padT+r,maxY=cssH-padB-r;
+  if(maxX>=minX)sx=Math.max(minX,Math.min(maxX,sx));
+  if(maxY>=minY)sy=Math.max(minY,Math.min(maxY,sy));
+  b.x=(sx-camera.x)/z;b.y=(sy-camera.y)/z;
+  return b;
+}
+export function animalBubbles(views,t=0,state=null,zoom=1,layout=null) {
   if(state)views=Object.entries(state.pens).flatMap(([zoneId,slots])=>slots.map((o,index)=>({...getOccupantView(o),zoneId,index})).filter(v=>v.status!=='empty'));
   const icons={chicken:'egg',sheep:'wool',pig:'pork',cow:'beef',pond:'fish'},bubbles=[];
   const r=bubbleWorldRadius(zoom);
@@ -101,6 +112,7 @@ export function animalBubbles(views,t=0,state=null,zoom=1) {
     const z=MAP_LAYOUT.ZONES[zoneId],roof=z.roof || {x:z.bounds.x+z.bounds.w/2,y:z.bounds.y};
     const b={zoneId,index:null,aggregated:true,action:'open-zone',count:active.length,label:ready.length?'收获':'喂饲料',icon:`icons/${ready.length?icons[zoneId]:'feed'}.webp`,x:roof.x,y:roof.y-r-32,r,zoom,targetX:roof.x,targetY:roof.y-12};
     for(const other of bubbles)if(Math.abs(b.y-other.y)<r+other.r+8 && Math.abs(b.x-other.x)<r+other.r+12)b.x=other.x+r+other.r+12;
+    clampBubbleToViewport(b,layout);
     bubbles.push(b);
   }
   return bubbles;
@@ -145,6 +157,6 @@ export function drawLivestock(ctx,state,layout,t,now) {
   const views=livestockViews(state,layout,t,now);
   for(const v of views.filter(v=>v.status!=='empty').sort((a,b)=>a.y-b.y))animal(ctx,v,t);
   for(const front of Object.values(MAP_LAYOUT.FRONTS))drawSprite(ctx,front.file,front.x,front.y,front.w,front.h);
-  for(const b of animalBubbles(views,t,state,layout.camera.zoom))drawAnimalBubble(ctx,b);
+  for(const b of animalBubbles(views,t,state,layout.camera.zoom,layout))drawAnimalBubble(ctx,b);
   return views;
 }

@@ -48,7 +48,26 @@ export function cameraForZone(layout, id) {
   if(!b)return null;
   return fitCamera(layout,b,id==='farm'?64:12,id==='farm'?80:id==='pig'?200:56);
 }
-export function fieldCamera(layout){const b=zoneBounds(layout,'farm');return fitCamera({...layout,cssH:Math.max(160,layout.cssH-82)},{x:b.x-35,y:b.y-35,w:b.w+70,h:b.h+100},70,85);}
+export function fieldCamera(layout){
+  const field=zoneBounds(layout,'farm');
+  const house=layout.zones.find(z=>z.id==='house').bounds;
+  const sign=MAP_LAYOUT.SIGNS.find(s=>s.id==='house');
+  const left=70,right=88,top=48,bottom=90;
+  const b={x:field.x-16,y:field.y-20,w:field.w+32,h:field.h+40};
+  let zoom=Math.max(WORLD.minZoom,Math.min(.85,(layout.cssW-left-right)/b.w,(layout.cssH-top-bottom)/b.h));
+  // Keep the cottage and its sign to the right of the shop button, even at x=0.
+  const hideAt=sign?sign.x:house.x;
+  zoom=Math.max(zoom,layout.cssW/Math.max(1,hideAt-8));
+  let x=left+(layout.cssW-left-right-b.w*zoom)/2-b.x*zoom;
+  let y=top+(layout.cssH-top-bottom-b.h*zoom)/2-b.y*zoom;
+  const maxRight=house.x-8;
+  if((layout.cssW-x)/zoom>maxRight)x=layout.cssW-maxRight*zoom;
+  const minLeft=field.x;
+  if(-x/zoom>minLeft)x=-minLeft*zoom+left;
+  const target={zoom,x,y};
+  clampCamera(target,layout.cssW,layout.cssH);
+  return target;
+}
 // Frame the cottage and all field beds, reserving the left navigation strip.
 export function homeCamera(layout) {
   const field=zoneBounds(layout,'farm'),house=layout.zones.find(z=>z.id==='house').bounds;
@@ -88,12 +107,12 @@ export function hitTestPlot(x, y, layout) {
 export function plotIndicatorSizes(zoom) {
   const bounded = (size, min, max) => Math.min(max, Math.max(min, size * zoom)) / zoom;
   return {
-    font: bounded(11, 12, 17),
-    barWidth: bounded(52, 40, 72),
-    barHeight: bounded(5, 4, 7),
+    font: bounded(8, 7.5, 11),
+    barWidth: bounded(34, 28, 46),
+    barHeight: bounded(3.2, 2.6, 4),
     sparkle: bounded(8, 3.2, 9),
-    gap: 4 / zoom,
-    stroke: bounded(2, 1.5, 2.5),
+    gap: 2 / zoom,
+    stroke: bounded(1.4, 1.1, 2),
   };
 }
 function drawStarSparkle(ctx,x,y,r,alpha){
@@ -131,11 +150,11 @@ export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 
     const neighbors=corners.filter(c=>c!==tl && c!==opposite).sort((a,b)=>b[0]-a[0]);
     const [tr,bl]=neighbors,br=opposite;
     const shortAxis=Math.min(Math.hypot(tr[0]-tl[0],tr[1]-tl[1]),Math.hypot(bl[0]-tl[0],bl[1]-tl[1]));
-    const width=shortAxis*(frame===0?.50:ripe?.48:.53),height=width*(tall?1.38:1.05);
+    const width=shortAxis*(frame===0?.62:ripe?.70:.72),height=width*(tall?1.32:1.02);
     const cols=ripe && ['cabbage','pumpkin','potato'].includes(view.crop.id)?3:4;
     const plants=[];
     for(let row=0;row<3;row++)for(let col=0;col<cols;col++) {
-      const u=.14+.72*(col+.5)/cols,v=(tall?.36:.14)+(tall?.54:.72)*(row+.5)/3;
+      const u=.10+.80*(col+.5)/cols,v=(tall?.32:.10)+(tall?.60:.80)*(row+.5)/3;
       plants.push({x:(1-u)*(1-v)*tl[0]+u*(1-v)*tr[0]+(1-u)*v*bl[0]+u*v*br[0],
         y:(1-u)*(1-v)*tl[1]+u*(1-v)*tr[1]+(1-u)*v*bl[1]+u*v*br[1]});
     }
@@ -154,10 +173,12 @@ export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 
       }
     } else {
       const {barWidth,barHeight,font,gap}=indicator;
-      const x=p.cx-barWidth/2,y=p.y-gap-barHeight;
+      const backY=Math.min(...corners.map(c=>c[1]));
+      // Sit the tidy timer just inside this bed's back edge so it does not cover the plot above.
+      const x=p.cx-barWidth/2,y=backY+gap;
       fillRoundRect(ctx,x,y,barWidth,barHeight,barHeight/2,'#593c2e');
       fillRoundRect(ctx,x,y,barWidth*view.progress,barHeight,barHeight/2,'#a9e873');
-      drawText(ctx,formatMs(view.remainingMs),p.cx,y-gap-font/2,{size:font,color:'#fff7df',shadow:true});
+      drawText(ctx,formatMs(view.remainingMs),p.cx,y-gap-font*0.45,{size:font,color:'#fff7df',shadow:true});
     }
   }
   drawLivestock(ctx,state,layout,animationNow,now);

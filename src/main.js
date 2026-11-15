@@ -258,7 +258,7 @@ function tap(x, y) {
   if(hit){if(!farmMode){enterFarmMode(hit.index);return;}selectedPlotIndex=hit.index;}
   else {
     setFarmMode(false);
-    const animalBubble=hitTestAnimalBubble(x,y,layout,animalBubbles(drawnLivestock,lastAnimationNow,state,layout.camera.zoom));
+    const animalBubble=hitTestAnimalBubble(x,y,layout,animalBubbles(drawnLivestock,lastAnimationNow,state,layout.camera.zoom,layout));
     const animal=hitTestLivestock(x,y,layout,drawnLivestock);
     const target=animalBubble?.zoneId || animal?.zoneId || hitTestZone(x,y,layout)?.id;
     if(target){openZone(target);return;}
@@ -442,7 +442,7 @@ function exposeDebug() {
     setDebugOverlay: flags => {for(const key of ['plots','walk'])if(key in flags)debugOverlay[key]=!!flags[key];return {...debugOverlay};},
     getDebugOverlay:()=>({...debugOverlay}),
     getUI:()=>({farmMode,trayOpen,chromeVisible,openZone:openZoneId}),
-    getAnimalBubbles:()=>animalBubbles(drawnLivestock,lastAnimationNow,state,layout.camera.zoom),
+    getAnimalBubbles:()=>animalBubbles(drawnLivestock,lastAnimationNow,state,layout.camera.zoom,layout),
     getLivestockViews:()=>livestockViews(state,layout,lastAnimationNow),
     mapInput,
     isPortraitRotated,
