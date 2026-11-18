@@ -1,6 +1,6 @@
-import { canvasInput } from '../ui/inputMap.js?v=f4838dd5f949';
-import { drawEmoji, drawText, fillEllipse } from './draw.js?v=f4838dd5f949';
-import { toScreen } from './farmView.js?v=f4838dd5f949';
+import { canvasInput } from '../ui/inputMap.js?v=587b0539db14';
+import { drawEmoji, drawText, fillEllipse } from './draw.js?v=587b0539db14';
+import { toScreen } from './farmView.js?v=587b0539db14';
 
 export function createEffects() {
   const effects = [];

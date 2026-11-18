@@ -1,4 +1,4 @@
-import { CROPS, PRODUCTS } from '../game/config.js?v=f4838dd5f949';
+import { CROPS, PRODUCTS } from '../game/config.js?v=587b0539db14';
 export function itemIcon(id) {
   const item=CROPS[id]||PRODUCTS[id]||{name:'饲料',emoji:'🥣'};
   const icon=CROPS[id]?`crops/${id}-2`:['feed','egg','wool','pork','beef'].includes(id)?`icons/${id}`:['crucianMeat','carpMeat','goldfishMeat'].includes(id)?'icons/fish':null;

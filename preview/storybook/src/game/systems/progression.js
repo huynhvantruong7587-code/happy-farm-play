@@ -1,4 +1,4 @@
-import { CROPS, CROP_LIST, ANIMALS, xpToNext } from '../config.js?v=f4838dd5f949';
+import { CROPS, CROP_LIST, ANIMALS, xpToNext } from '../config.js?v=587b0539db14';
 
 export function isUnlocked(state, cropId) {
   const crop = CROPS[cropId];

@@ -1,4 +1,4 @@
-import { ANIMALS, FEED, slotCount } from '../config.js?v=f4838dd5f949';
+import { ANIMALS, FEED, slotCount } from '../config.js?v=587b0539db14';
 const fail = reason => ({ok:false,reason});
 const count = n => Number.isFinite(n) && n > 0 && Number.isInteger(n);
 export function buyYoung(state, kind, n=1) {

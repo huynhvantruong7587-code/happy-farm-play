@@ -1,6 +1,6 @@
-import { getImage } from './assets.js?v=f4838dd5f949';
-import { MAP_LAYOUT } from './mapLayout.js?v=f4838dd5f949';
-import { drawStorybookGround, drawStorybookBuildings } from './storybookScenery.js?v=f4838dd5f949';
+import { getImage } from './assets.js?v=587b0539db14';
+import { MAP_LAYOUT } from './mapLayout.js?v=587b0539db14';
+import { drawStorybookGround, drawStorybookBuildings } from './storybookScenery.js?v=587b0539db14';
 export function drawScenery(ctx, world,groundExtension=0) {
  if(MAP_LAYOUT.ENVIRONMENT){
   const img=getImage(MAP_LAYOUT.ENVIRONMENT);

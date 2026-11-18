@@ -1,7 +1,7 @@
-import { farmerStart } from '../render/farmerView.js?v=f4838dd5f949';
-import { ensureMarket } from './systems/market.js?v=f4838dd5f949';
-import { GAME, CROPS, ANIMALS, PRODUCTS, PEN_ZONES } from './config.js?v=f4838dd5f949';
-import { MAP_LAYOUT } from '../render/mapLayout.js?v=f4838dd5f949';
+import { farmerStart } from '../render/farmerView.js?v=587b0539db14';
+import { ensureMarket } from './systems/market.js?v=587b0539db14';
+import { GAME, CROPS, ANIMALS, PRODUCTS, PEN_ZONES } from './config.js?v=587b0539db14';
+import { MAP_LAYOUT } from '../render/mapLayout.js?v=587b0539db14';
 
 function emptyCounts() {
   const counts = {};

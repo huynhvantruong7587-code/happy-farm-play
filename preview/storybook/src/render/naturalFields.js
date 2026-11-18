@@ -1,4 +1,4 @@
-import {getImage,drawAnchored} from './assets.js?v=f4838dd5f949';
+import {getImage,drawAnchored} from './assets.js?v=587b0539db14';
 function surfacePoint(p,u,v){
  const [tl,tr,br,bl]=p.surface;
  return {x:(1-u)*(1-v)*tl[0]+u*(1-v)*tr[0]+u*v*br[0]+(1-u)*v*bl[0],y:(1-u)*(1-v)*tl[1]+u*(1-v)*tr[1]+u*v*br[1]+(1-u)*v*bl[1]};
@@ -19,9 +19,17 @@ export function drawNaturalBeds(ctx,plots){const sprite=bedSprite();if(sprite)fo
 export function drawNaturalCrops(ctx,p,view,time){
  const ripe=view.status==='ripe',large=view.progress>.55,atlas=getImage('redesign/study-crops.png'),kind=['wheat','carrot','cabbage'].indexOf(view.crop.id),grain=ripe&&kind===0,reduced=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
  for(const a of naturalCropAnchors(p,view)){
-  const depth=(.94+a.v*.08)*(1+Math.sin(p.index*17+a.row*7+a.col*11)*.025),w=p.h*(grain?.40:ripe?.52:large?.42:.30)*depth,h=p.h*(grain?.49:ripe?.55:large?.42:.30)*depth;
+  const depth=(.94+a.v*.08)*(1+Math.sin(p.index*17+a.row*7+a.col*11)*.025),carrotSeedling=kind===1&&!ripe&&atlas;
+  const growth=Math.min(1,view.progress/.95);
+  const w=p.h*(carrotSeedling?.32+growth*.10:grain?.40:ripe?.52:large?.42:.30)*depth,h=p.h*(carrotSeedling?.18+growth*.14:grain?.49:ripe?.55:large?.42:.30)*depth;
   ctx.save();ctx.translate(a.x,a.y);ctx.rotate(Math.sin(p.index*13+a.col*7+a.row*19)*.018+(ripe&&!reduced?Math.sin(time/1600+p.index+a.col)*.012:0));
-  if(kind>=0&&atlas){const sw=atlas.naturalWidth/3,sh=atlas.naturalHeight/2,tile=kind+(ripe?0:3);ctx.drawImage(atlas,tile%3*sw,Math.floor(tile/3)*sh,sw,sh,-w/2,-h,w,h);}
+  if(kind>=0&&atlas){
+   const sw=atlas.naturalWidth/3,sh=atlas.naturalHeight/2,tile=kind+(ripe?0:3);
+   // The young carrot occupies a small patch inside its 512px tile. Exclude
+   // transparent margins so a newly planted plot has clearly visible leaves.
+   if(carrotSeedling)ctx.drawImage(atlas,sw+sw*64/512,sh+sh*124/512,sw*356/512,sh*236/512,-w/2,-h,w,h);
+   else ctx.drawImage(atlas,tile%3*sw,Math.floor(tile/3)*sh,sw,sh,-w/2,-h,w,h);
+  }
   else drawAnchored(ctx,`crops/${view.crop.id}-${ripe?2:large?1:0}.webp`,0,0,w,h);ctx.restore();
  }
  if(ripe){
