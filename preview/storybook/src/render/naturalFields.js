@@ -1,4 +1,4 @@
-import {getImage,drawAnchored} from './assets.js?v=b5e861e4569c';
+import {getImage,drawAnchored} from './assets.js?v=0019904d88fd';
 function surfacePoint(p,u,v){
  const [tl,tr,br,bl]=p.surface;
  return {x:(1-u)*(1-v)*tl[0]+u*(1-v)*tr[0]+u*v*br[0]+(1-u)*v*bl[0],y:(1-u)*(1-v)*tl[1]+u*(1-v)*tr[1]+u*v*br[1]+(1-u)*v*bl[1]};

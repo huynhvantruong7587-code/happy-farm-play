@@ -1,5 +1,5 @@
-import { CROP_LIST, PRODUCTS, FEED, ANIMALS, BUILDINGS, TRADING, formatGrowTime } from '../game/config.js?v=b5e861e4569c';
-import { isUnlocked } from '../game/systems/progression.js?v=b5e861e4569c';
+import { CROP_LIST, PRODUCTS, FEED, ANIMALS, BUILDINGS, TRADING, formatGrowTime } from '../game/config.js?v=0019904d88fd';
+import { isUnlocked } from '../game/systems/progression.js?v=0019904d88fd';
 const itemIcon = item => item.id==='hide'
   ? '<svg viewBox="0 0 52 52" width="44" height="44" aria-label="牛皮"><path d="M16 5 Q26 12 36 5 L45 15 Q35 22 45 38 L35 46 Q26 38 17 46 L7 38 Q17 23 7 15 Z" fill="#a46a3e" stroke="#654128" stroke-width="3"/><path d="M18 12 Q26 17 34 12 L38 17 Q31 25 38 36 L34 39 Q26 33 18 39 L14 35 Q21 25 14 18 Z" fill="none" stroke="#e5bb7b" stroke-width="1.5" stroke-dasharray="3 2"/></svg>'
   : item.emoji;

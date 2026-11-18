@@ -1,6 +1,6 @@
-import { getImage } from './assets.js?v=b5e861e4569c';
-import { MAP_LAYOUT } from './mapLayout.js?v=b5e861e4569c';
-import { drawStorybookGround, drawStorybookBuildings } from './storybookScenery.js?v=b5e861e4569c';
+import { getImage } from './assets.js?v=0019904d88fd';
+import { MAP_LAYOUT } from './mapLayout.js?v=0019904d88fd';
+import { drawStorybookGround, drawStorybookBuildings } from './storybookScenery.js?v=0019904d88fd';
 export function drawScenery(ctx, world) {
  if(MAP_LAYOUT.ENVIRONMENT){const img=getImage(MAP_LAYOUT.ENVIRONMENT);if(img)ctx.drawImage(img,0,0,world.w,world.h);return;}
  if(MAP_LAYOUT.STYLE==='storybook'){drawStorybookGround(ctx);drawStorybookBuildings(ctx);return;}

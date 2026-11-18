@@ -1,4 +1,4 @@
-import { STORYBOOK_LAYOUT } from './storybookLayout.js?v=b5e861e4569c';
+import { STORYBOOK_LAYOUT } from './storybookLayout.js?v=0019904d88fd';
 const LEGACY_MAP_LAYOUT = {
   "WORLD": {
     "w": 5120,

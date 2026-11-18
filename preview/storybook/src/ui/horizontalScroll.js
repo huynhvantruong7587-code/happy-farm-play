@@ -1,4 +1,4 @@
-import {mapInput} from './inputMap.js?v=b5e861e4569c';
+import {mapInput} from './inputMap.js?v=0019904d88fd';
 
 // One gesture owner for mouse and touch, including the quarter-turned phone UI.
 export function bindHorizontalScroll(list){
@@ -22,22 +22,23 @@ export function bindHorizontalScroll(list){
   list.addEventListener('pointerdown',e=>{
     if(e.isPrimary===false||e.button>0)return;
     stop();suppress=false;
-    drag={id:e.pointerId,start:mapInput(e.clientX,e.clientY).x,scroll:list.scrollLeft,samples:[],last:performance.now(),moved:false};
+    const x=mapInput(e.clientX,e.clientY).x;
+    drag={id:e.pointerId,start:x,scroll:list.scrollLeft,samples:[{x,time:e.timeStamp}],last:e.timeStamp,moved:false};
   });
   list.addEventListener('pointermove',e=>{
     if(!drag||e.pointerId!==drag.id)return;
-    const x=mapInput(e.clientX,e.clientY).x,now=performance.now(),dx=x-drag.start;
+    const x=mapInput(e.clientX,e.clientY).x,now=e.timeStamp,dx=x-drag.start;
     if(!drag.moved&&Math.abs(dx)<=6)return;
     drag.moved=true;suppress=true;list.setPointerCapture(e.pointerId);
     list.scrollLeft=drag.scroll-dx;
-    drag.samples.push({x,time:now});drag.samples=drag.samples.filter(p=>now-p.time<=100);drag.last=now;
+    drag.samples.push({x,time:now});drag.samples=drag.samples.filter((p,i,all)=>now-p.time<=100||i>=all.length-2);drag.last=now;
     e.preventDefault();
   },{passive:false});
   function finish(e,cancelled){
     if(!drag||e.pointerId!==drag.id)return;
     const ended=drag;drag=null;
     if(list.hasPointerCapture(e.pointerId))list.releasePointerCapture(e.pointerId);
-    if(cancelled||!ended.moved||performance.now()-ended.last>100)return;
+    if(cancelled||!ended.moved||e.timeStamp-ended.last>140)return;
     const first=ended.samples[0],last=ended.samples.at(-1);
     if(first&&last&&last.time-first.time>8)glide(Math.max(-2.5,Math.min(2.5,(first.x-last.x)/(last.time-first.time))));
   }

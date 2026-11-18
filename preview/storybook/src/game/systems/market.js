@@ -1,4 +1,4 @@
-import { CROPS, PRODUCTS } from '../config.js?v=b5e861e4569c';
+import { CROPS, PRODUCTS } from '../config.js?v=0019904d88fd';
 const goods = {...CROPS,...PRODUCTS};
 export const MARKET_VARIANTS = ['bunny','bear','fox','duck','cat','boy'];
 export function createCustomer(now=Date.now(), random=Math.random) {

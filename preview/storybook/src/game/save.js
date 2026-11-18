@@ -1,6 +1,6 @@
-import { GAME } from './config.js?v=b5e861e4569c';
-import { createInitialState, normalizeState } from './state.js?v=b5e861e4569c';
-import { MAP_LAYOUT } from '../render/mapLayout.js?v=b5e861e4569c';
+import { GAME } from './config.js?v=0019904d88fd';
+import { createInitialState, normalizeState } from './state.js?v=0019904d88fd';
+import { MAP_LAYOUT } from '../render/mapLayout.js?v=0019904d88fd';
 // The review build has its own storage, so it cannot overwrite the working game.
 const saveKey=GAME.saveKey+(MAP_LAYOUT.STYLE==='storybook'?'-storybook-preview':'');
 
