@@ -1,9 +1,9 @@
-import { ZONE_NAMES } from '../game/config.js';
-import { getOccupantView } from '../game/systems/livestock.js';
-import { drawAnchored, drawSprite } from './assets.js';
-import { fillRoundRect as rect, drawText } from './draw.js';
+import { ZONE_NAMES } from '../game/config.js?v=b5e861e4569c';
+import { getOccupantView } from '../game/systems/livestock.js?v=b5e861e4569c';
+import { drawAnchored, drawSprite } from './assets.js?v=b5e861e4569c';
+import { fillRoundRect as rect, drawText } from './draw.js?v=b5e861e4569c';
 
-import { MAP_LAYOUT } from './mapLayout.js';
+import { MAP_LAYOUT } from './mapLayout.js?v=b5e861e4569c';
 export const ANIMAL_BUBBLE_RADIUS=62;
 // Keep bubbles readable when the whole map is on screen (world size grows as zoom drops).
 export const ANIMAL_BUBBLE_MIN_SCREEN=24;

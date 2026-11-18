@@ -12,7 +12,7 @@ export function toast(message, { timeout = 3200, action, onClick } = {}) {
   const icon = document.createElement('span');
   icon.className = 'toast-icon';
   icon.setAttribute('aria-hidden', 'true');
-  icon.textContent = /不足|不够|没有|不能|无法/.test(message) ? '⚠️' : /买|商店/.test(message) ? '🛒' : /仓库|出售|收获/.test(message) ? '🎒' : /种|生长/.test(message) ? '🌱' : '✨';
+  icon.textContent = /不足|不够|没有|不能|无法/.test(message) ? '⚠️' : /买|商店/.test(message) ? '🛒' : /仓库|出售|收获/.test(message) ? '🧺' : /种|生长/.test(message) ? '🌱' : '✨';
   const label = document.createElement('span');
   label.textContent = message;
   el.append(icon, label);

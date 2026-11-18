@@ -1,4 +1,4 @@
-import { CROPS } from '../config.js';
+import { CROPS } from '../config.js?v=b5e861e4569c';
 
 export function getPlotView(plot, now = Date.now()) {
   if (!plot || !plot.cropId || !CROPS[plot.cropId]) {

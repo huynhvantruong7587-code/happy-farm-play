@@ -1,6 +1,6 @@
-import {CROP_LIST,PRODUCTS,ANIMALS,FEED,formatGrowTime} from '../game/config.js';
-import {itemIcon,itemCount} from './icons.js';
-import {mapInput} from './inputMap.js';
+import {CROP_LIST,PRODUCTS,ANIMALS,FEED,formatGrowTime} from '../game/config.js?v=b5e861e4569c';
+import {itemIcon,itemCount} from './icons.js?v=b5e861e4569c';
+import {bindHorizontalScroll} from './horizontalScroll.js?v=b5e861e4569c';
 
 const art=id=>`<span class="commerce-art">${itemIcon(id)}</span>`;
 const animalArt=a=>`<span class="commerce-art"><img src="assets/animals/${a.id}-0.webp" alt="${a.name}"></span>`;
@@ -30,12 +30,7 @@ export function createNaturalCommerce({getState,onBuy,onYoung,onFeed,onCraft,onM
   const millFooter=document.createElement('footer');millFooter.className='commerce-footer';millFooter.textContent='每次制作 1 份饲料 · 材料足够即可立即完成';mill.querySelector('.modal-card').append(millFooter);
 
   for(const list of [document.getElementById('shop-list'),document.getElementById('bag-list')]){
-    let drag=null,suppress=false;
-    list.addEventListener('pointerdown',e=>{drag={id:e.pointerId,x:mapInput(e.clientX,e.clientY).x,scroll:list.scrollLeft};suppress=false;});
-    list.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const dx=mapInput(e.clientX,e.clientY).x-drag.x;if(Math.abs(dx)>6){suppress=true;list.setPointerCapture(e.pointerId);list.scrollLeft=drag.scroll-dx;}});
-    for(const type of ['pointerup','pointercancel'])list.addEventListener(type,()=>{drag=null;});
-    list.addEventListener('click',e=>{if(suppress){e.preventDefault();e.stopImmediatePropagation();suppress=false;}},true);
-    list.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&list.scrollWidth>list.clientWidth){list.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
+    bindHorizontalScroll(list);
   }
 
   for(const panel of [shop,bag,mill])panel.addEventListener('click',e=>{
@@ -67,13 +62,13 @@ export function createNaturalCommerce({getState,onBuy,onYoung,onFeed,onCraft,onM
   function renderShop(tab){
     const s=getState(),list=document.getElementById('shop-list');
     document.getElementById('commerce-coins').innerHTML=price(s.coins);
-    shopFooter.textContent=tab==='feed'?'每次购买或制作 1 份 · 饲料可用于所有养殖区':'每次购买 1 份 · 左右滑动，查看更多商品';
+    shopFooter.textContent=tab==='feed'?'每次购买 1 份 · 作物加工请前往饲料坊':'每次购买 1 份 · 左右滑动，查看更多商品';
     const entries=tab==='seeds'?CROP_LIST:tab==='animals'?Object.values(ANIMALS):[];
     const cards=entries.map(a=>{
       const seed=tab==='seeds',cost=seed?a.seedCost:a.cost,owned=seed?s.seeds[a.id]||0:s.stock[a.id]||0,locked=s.level<a.unlockLevel,poor=s.coins<cost;
       return `<article class="commerce-card${locked?' commerce-locked':''}" data-product="${a.id}"><div class="commerce-card-top"><span>${seed?'作物种子':'幼畜 / 鱼苗'}</span><span class="natural-state ${locked?'empty':'ready'}">${locked?`Lv.${a.unlockLevel} 解锁`:'可购买'}</span></div>${seed?art(a.id):animalArt(a)}<h3>${a.name}${seed?'种子':''}</h3><p class="commerce-description">${seed?'生长':'喂养'} ${formatGrowTime(a.growMs)}${seed?` · 收获经验 +${a.xp}`:''}</p><p class="commerce-owned">库存 <b>${owned}</b> 份</p><div class="commerce-card-action">${price(cost)}${button(locked?'未解锁':poor?'金币不足':'购买',`${seed?'buy':'young'}:${a.id}`,locked||poor)}</div></article>`;
     });
-    if(tab==='feed')cards.push(`<article class="commerce-card" data-product="feed"><div class="commerce-card-top"><span>动物口粮</span><span class="natural-state ready">通用饲料</span></div>${art('feed')}<h3>饲料</h3><p class="commerce-description">每次喂养消耗 1 份</p><p class="commerce-owned">库存 <b>${s.inventory.feed}</b> 份</p><div class="commerce-card-action">${price(FEED.cost)}${button(s.coins<FEED.cost?'金币不足':'购买','feed',s.coins<FEED.cost)}</div></article>`,recipe(s,'wheat'),recipe(s,'corn'));
+    if(tab==='feed')cards.push(`<article class="commerce-card" data-product="feed"><div class="commerce-card-top"><span>动物口粮</span><span class="natural-state ready">通用饲料</span></div>${art('feed')}<h3>饲料</h3><p class="commerce-description">每次喂养消耗 1 份</p><p class="commerce-owned">库存 <b>${s.inventory.feed}</b> 份</p><div class="commerce-card-action">${price(FEED.cost)}${button(s.coins<FEED.cost?'金币不足':'购买','feed',s.coins<FEED.cost)}</div></article>`);
     replaceCards(list,cards.join(''));
   }
   function renderBag(){

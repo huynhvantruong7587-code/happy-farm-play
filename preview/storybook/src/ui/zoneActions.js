@@ -1,5 +1,5 @@
-import { ANIMALS, slotCount } from '../game/config.js';
-import { getOccupantView } from '../game/systems/livestock.js';
+import { ANIMALS, slotCount } from '../game/config.js?v=b5e861e4569c';
+import { getOccupantView } from '../game/systems/livestock.js?v=b5e861e4569c';
 export function zoneActions(state,id,now=Date.now()) {
   const slots=state.pens[id];
   if(!slots)return null;

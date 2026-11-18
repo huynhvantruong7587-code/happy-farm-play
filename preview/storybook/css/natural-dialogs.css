@@ -98,7 +98,7 @@
 .natural-amber{background:linear-gradient(#f7cc70,#eab54e);color:#80511e;border:1px solid #cc9b43;box-shadow:inset 0 1px #fff0bf,0 2px 1px #b8984e33}
 .natural-dialog button:focus-visible{outline:3px solid #6c8e43;outline-offset:2px}
 .natural-dialog .natural-card-action button{touch-action:manipulation}
-@media(max-height:480px){
+@media(max-height:480px),(orientation:portrait) and (max-width:480px){
  .storybook .animal-overlay.natural-dialog{padding:10px 16px}
  .natural-dialog .animal-panel{padding:10px 17px 8px;border-radius:21px}
  .natural-dialog .animal-head{min-height:54px;padding-bottom:7px;margin-bottom:8px;gap:9px}
@@ -129,3 +129,25 @@
  .natural-price{padding:5px 0}.natural-price strong{font-size:18px}.natural-price>span{font-size:11px}
  .natural-confirm-card{padding:12px 18px 15px;border-radius:20px}.natural-confirm-card header{padding-bottom:6px}.natural-confirm-card h2{font-size:21px}.natural-confirm-body{padding:8px 0;gap:14px}.confirm-chicken{height:79px;width:63px}.natural-confirm-body p{font-size:13px;line-height:1.6}.natural-confirm-reward{padding-top:5px}.natural-confirm-reward strong{font-size:15px}.natural-confirm-warning{padding:7px 10px;font-size:11px;margin:2px 0 10px}.natural-close{width:34px;height:34px;min-width:34px;font-size:25px}
 }
+
+.storybook[data-short=true] .animal-overlay.natural-dialog{padding:6px 14px}
+.storybook[data-short=true] .natural-dialog .animal-panel{padding:8px 15px 6px}
+.storybook[data-short=true] .natural-dialog .animal-head{min-height:42px;padding-bottom:5px;margin-bottom:5px}
+.storybook[data-short=true] .natural-dialog .animal-head h2 small{display:none}
+.storybook[data-short=true] .natural-dialog .animal-head h2>img{height:35px;width:33px}
+.storybook[data-short=true] .natural-dialog #animal-slots>.natural-card{padding:6px 10px}
+.storybook[data-short=true] .animal-portrait{min-height:0;flex:1 1 0;overflow:hidden;padding:1px 0}
+.storybook[data-short=true] .animal-portrait img{height:100%;min-height:0;max-height:60px}
+.storybook[data-short=true] .natural-production{min-height:31px;font-size:14px}
+.storybook[data-short=true] .natural-card-top{min-height:19px}
+.storybook[data-short=true] .natural-dialog .natural-card-action{min-height:33px;padding-top:3px}
+.storybook[data-short=true] .natural-dialog .natural-primary{min-height:30px;font-size:13px;padding:4px 9px}
+.storybook[data-short=true] .natural-other,.storybook[data-short=true] .natural-release-note{min-height:21px;margin-top:1px}
+.storybook[data-short=true] .natural-customer-head{min-height:49px;gap:8px}
+.storybook[data-short=true] .customer-portrait{height:49px;width:43px}
+.storybook[data-short=true] .natural-customer-head h3{font-size:14px;margin-bottom:3px}
+.storybook[data-short=true] .natural-demand{min-height:0;padding:4px 0;margin-top:3px}
+.storybook[data-short=true] .natural-demand .natural-item-art{height:30px;width:30px}
+.storybook[data-short=true] .natural-demand strong{font-size:15px}
+.storybook[data-short=true] .natural-price{padding:3px 0}
+.storybook[data-short=true] .natural-dialog-footer{min-height:17px;padding-top:3px}

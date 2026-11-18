@@ -1,4 +1,4 @@
-import { CROPS, PRODUCTS } from '../config.js';
+import { CROPS, PRODUCTS } from '../config.js?v=b5e861e4569c';
 
 export function buySeed(state, cropId, count = 1) {
   const crop = CROPS[cropId];

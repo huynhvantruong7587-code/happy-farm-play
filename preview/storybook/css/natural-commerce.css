@@ -41,7 +41,10 @@
 .formula-arrow{font-size:26px;color:#c1ab7f}
 .natural-commerce button:focus-visible,.natural-mill button:focus-visible{outline:3px solid #6c8e43;outline-offset:2px}
 .natural-commerce [hidden]{display:none!important}
-@media(max-height:480px){
+.storybook .free-horizontal-scroll{scroll-snap-type:none!important;touch-action:none!important;scroll-behavior:auto}
+.storybook .free-horizontal-scroll>*{scroll-snap-align:none!important}
+.natural-commerce #shop-list>.commerce-card:only-child{margin-inline:auto;flex-grow:0;flex-basis:clamp(230px,32%,340px)}
+@media(max-height:480px),(orientation:portrait) and (max-width:480px){
  .natural-commerce-overlay,.storybook #panel-mill.natural-mill{padding:10px 16px}
  .storybook .natural-commerce,.storybook #panel-mill.natural-mill .modal-card{padding:10px 17px 8px;border-radius:21px}
  .natural-commerce .sheet-head,.natural-mill .mill-head{min-height:54px;padding-bottom:7px;margin-bottom:8px;gap:9px}
@@ -61,3 +64,25 @@
  .natural-mill .mill-body{gap:11px;padding-bottom:6px}.commerce-formula{gap:13px;min-height:65px}.commerce-formula>div{font-size:14px;gap:5px}.commerce-formula .commerce-art{width:70px;height:77px;max-height:77px}.commerce-formula .commerce-art img{max-height:66px}
  .natural-commerce .commerce-recipe .commerce-formula{gap:9px;min-height:60px}.natural-commerce .commerce-recipe .commerce-formula>div{font-size:12px;gap:3px}.natural-commerce .commerce-recipe .commerce-art{height:58px;max-height:58px;width:49px}.natural-commerce .commerce-recipe .commerce-art img{max-height:48px}
 }
+
+/* Browser toolbars and a quarter-turned phone must not clip the action row. */
+.storybook[data-short=true] .natural-commerce-overlay,.storybook[data-short=true] #panel-mill.natural-mill{padding:6px 14px}
+.storybook[data-short=true] .natural-commerce,.storybook[data-short=true] #panel-mill.natural-mill .modal-card{padding:8px 15px 6px}
+.storybook[data-short=true] .natural-commerce .sheet-head,.storybook[data-short=true] .natural-mill .mill-head{min-height:39px;padding-bottom:5px;margin-bottom:5px}
+.storybook[data-short=true] .natural-commerce h2 small,.storybook[data-short=true] .natural-mill h2 small{display:none}
+.storybook[data-short=true] .commerce-heading-icon{height:31px;width:32px;font-size:27px}
+.storybook[data-short=true] .natural-commerce .sheet-head h2,.storybook[data-short=true] .natural-mill .mill-head h2{font-size:20px}
+.storybook[data-short=true] .natural-commerce .shop-tabs{padding-bottom:5px}
+.storybook[data-short=true] .natural-commerce .shop-tabs button{min-height:28px;padding-block:3px}
+.storybook[data-short=true] #panel-shop .commerce-footer{display:none}
+.storybook[data-short=true] .commerce-card{padding:6px 10px}
+.storybook[data-short=true] .commerce-card-top{min-height:19px}
+.storybook[data-short=true] .commerce-art{min-height:0;flex:1 1 0;max-height:48px;overflow:hidden;padding:1px 0}
+.storybook[data-short=true] .commerce-art img{max-height:100%;min-height:0}
+.storybook[data-short=true] .commerce-card h3{font-size:14px;line-height:1.25;margin:2px 0}
+.storybook[data-short=true] .commerce-description,.storybook[data-short=true] .commerce-owned{font-size:10px;line-height:1.4;margin:1px 0}
+.storybook[data-short=true] .commerce-card-action{min-height:34px;padding-top:3px}
+.storybook[data-short=true] .commerce-card-action .natural-primary{min-height:31px;font-size:13px;padding:4px 8px}
+.storybook[data-short=true] .commerce-inventory-note{padding-top:3px;margin-bottom:1px}
+.storybook[data-short=true] .commerce-formula{min-height:0}
+.storybook[data-short=true] .commerce-formula .commerce-art{height:48px;flex:none}

@@ -28,6 +28,7 @@ export function bindLandscape(onResize) {
     const height = viewport?.height || window.innerHeight;
     const rotated = height > width;
     root.dataset.rotated = String(rotated);
+    root.dataset.short = String(Math.min(width,height)<=340);
     root.style.width = `${rotated ? height : width}px`;
     root.style.height = `${rotated ? width : height}px`;
     root.style.left = `${(viewport?.offsetLeft || 0) + (rotated ? width : 0)}px`;

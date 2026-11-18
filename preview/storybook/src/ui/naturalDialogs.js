@@ -1,7 +1,7 @@
-import {ANIMALS,PEN_ZONES,ZONE_NAMES,CROPS,PRODUCTS,slotCount,slotUnlockLevel,formatMs} from '../game/config.js';
-import {getOccupantView,previewMeatHarvest} from '../game/systems/livestock.js';
-import {itemIcon,itemCount} from './icons.js';
-import {mapInput} from './inputMap.js';
+import {ANIMALS,PEN_ZONES,ZONE_NAMES,CROPS,PRODUCTS,slotCount,slotUnlockLevel,formatMs} from '../game/config.js?v=b5e861e4569c';
+import {getOccupantView,previewMeatHarvest} from '../game/systems/livestock.js?v=b5e861e4569c';
+import {itemIcon,itemCount} from './icons.js?v=b5e861e4569c';
+import {bindHorizontalScroll} from './horizontalScroll.js?v=b5e861e4569c';
 
 const customerNames={bunny:'兔子客人',bear:'小熊客人',fox:'狐狸客人',duck:'鸭子客人',cat:'猫咪客人',boy:'邻家男孩'};
 const art=id=>`<span class="natural-item-art">${itemIcon(id)}</span>`;
@@ -21,7 +21,8 @@ export function createNaturalDialogs({getState,onFeed,onCollect,onRemove,onAdd,o
   const confirmation=document.createElement('div');confirmation.className='natural-confirm-overlay';confirmation.hidden=true;
   confirmation.innerHTML=`<section class="natural-confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="natural-confirm-title" aria-describedby="natural-confirm-description"><header><h2 id="natural-confirm-title">收取鸡肉？</h2><button type="button" class="natural-close" data-confirm="cancel" aria-label="关闭确认框">×</button></header><div class="natural-confirm-body"><img class="confirm-chicken" src="assets/animals/chicken-0.webp" alt="小鸡"><div><p id="natural-confirm-description">收取后，这只小鸡将离开鸡舍，空栏可重新放入小鸡。</p><div class="natural-confirm-reward"></div></div></div><p class="natural-confirm-warning"></p><div class="natural-confirm-actions"><button type="button" class="natural-secondary" data-confirm="cancel">取消</button><button type="button" class="natural-amber" data-confirm="accept">确认收取</button></div></section>`;
   root.append(confirmation);
-  let current=null,signature='',returnFocus=null,pending=null,menuIndex=null,pickerIndex=null,drag=null,suppress=false;
+  let current=null,signature='',returnFocus=null,pending=null,menuIndex=null,pickerIndex=null;
+  const scrolling=bindHorizontalScroll(list);
 
   function closeMenus(){menuIndex=null;pickerIndex=null;list.querySelectorAll('.natural-more-menu,.natural-stock-picker').forEach(e=>e.hidden=true);list.querySelectorAll('[data-action="other"],[data-action="add"]').forEach(e=>e.setAttribute('aria-expanded','false'));}
   function closeConfirmation(restore=true){
@@ -29,6 +30,7 @@ export function createNaturalDialogs({getState,onFeed,onCollect,onRemove,onAdd,o
     if(restore)list.querySelector(`[data-action="other"][data-index="${index}"]`)?.focus();
   }
   function close(){
+    scrolling.stop();
     if(!current)return;
     closeConfirmation(false);closeMenus();root.classList.remove('natural-dialog');delete root.dataset.zone;footer.hidden=true;inventory.hidden=false;
     current=null;signature='';const target=returnFocus;returnFocus=null;
@@ -100,12 +102,6 @@ export function createNaturalDialogs({getState,onFeed,onCollect,onRemove,onAdd,o
     }
   });
   document.addEventListener('click',e=>{if(current&&!pending&&!e.target.closest('[data-action="other"],[data-action="add"],.natural-more-menu,.natural-stock-picker'))closeMenus();});
-  // The market already has its own drag handler in main.js.
-  list.addEventListener('pointerdown',e=>{if(!penCopy[current])return;const p=mapInput(e.clientX,e.clientY);drag={id:e.pointerId,x:p.x,start:p.x,scroll:list.scrollLeft};suppress=false;});
-  list.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const p=mapInput(e.clientX,e.clientY),dx=p.x-drag.start;if(Math.abs(dx)>6){suppress=true;list.setPointerCapture(e.pointerId);list.scrollLeft=drag.scroll-dx;}});
-  for(const type of ['pointerup','pointercancel'])list.addEventListener(type,()=>{drag=null;});
-  list.addEventListener('click',e=>{if(penCopy[current]&&suppress){e.preventDefault();e.stopImmediatePropagation();suppress=false;}},true);
-  list.addEventListener('wheel',e=>{if(!current||list.scrollWidth<=list.clientWidth||Math.abs(e.deltaY)<=Math.abs(e.deltaX))return;list.scrollLeft+=e.deltaY;e.preventDefault();},{passive:false});
 
   function updateTimers(){
     if(!penCopy[current])return;
@@ -142,7 +138,7 @@ export function createNaturalDialogs({getState,onFeed,onCollect,onRemove,onAdd,o
   function render(id){
     if(!PEN_ZONES.includes(id)&&id!=='market'){close();return false;}
     const s=getState(),opened=current!==id||root.hidden;
-    if(opened){closeConfirmation(false);closeMenus();returnFocus=document.activeElement;current=id;signature='';drag=null;suppress=false;}
+    if(opened){scrolling.stop();closeConfirmation(false);closeMenus();returnFocus=document.activeElement;current=id;signature='';}
     root.classList.add('natural-dialog');root.dataset.zone=id;root.hidden=false;footer.hidden=false;
     const next=id!=='market'?JSON.stringify([id,s.level,s.stock,s.inventory.feed,s.pens[id].map(o=>o?[o.id,o.kind,o.fedAt,getOccupantView(o).status]:null)])
       :JSON.stringify([id,s.market.customers,s.market.customers.map(c=>c?s.inventory[c.wantId]:0)]);
@@ -151,7 +147,7 @@ export function createNaturalDialogs({getState,onFeed,onCollect,onRemove,onAdd,o
     const offset=opened?0:list.scrollLeft,active=document.activeElement,focusAction=active?.dataset.action,focusIndex=active?.dataset.index;
     buy.hidden=id==='market';inventory.hidden=id==='market';
     title.innerHTML=id!=='market'?`<img src="assets/animals/${penCopy[id].kind}-0.webp" alt=""><span>${ZONE_NAMES[id]}<small>${penCopy[id].subtitle}</small></span>`:'<span class="natural-heading-icon" aria-hidden="true">🧺</span><span>集市<small>带上收获，和客人交易</small></span>';
-    list.className=id==='market'?'market-slots natural-market-list':'natural-chicken-list';
+    list.className=(id==='market'?'market-slots natural-market-list':'natural-chicken-list')+' free-horizontal-scroll';
     if(id!=='market'){
       inventory.innerHTML=`${itemCount('feed',s.inventory.feed)}<span>饲料</span>`;
       list.innerHTML=s.pens[id].map((o,i)=>animalCard(s,o,i,id)).join('');

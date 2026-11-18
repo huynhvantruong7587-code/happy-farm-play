@@ -1,5 +1,5 @@
-import { MAP_LAYOUT } from './mapLayout.js';
-import { drawAnchored } from './assets.js';
+import { MAP_LAYOUT } from './mapLayout.js?v=b5e861e4569c';
+import { drawAnchored } from './assets.js?v=b5e861e4569c';
 export function besideZone(zone) {
   if(zone?.beside)return {x:zone.beside.x,y:zone.beside.y};
   const b=zone.bounds;

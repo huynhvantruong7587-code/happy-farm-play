@@ -1,28 +1,28 @@
-import { besideZone, moveFarmer, farmerFacing } from './render/farmerView.js';
-import { itemCount } from './ui/icons.js';
-import { tickMarket, sellToCustomer } from './game/systems/market.js';
-import { loadAssets } from './render/assets.js';
+import { besideZone, moveFarmer, farmerFacing } from './render/farmerView.js?v=b5e861e4569c';
+import { itemCount } from './ui/icons.js?v=b5e861e4569c';
+import { tickMarket, sellToCustomer } from './game/systems/market.js?v=b5e861e4569c';
+import { loadAssets } from './render/assets.js?v=b5e861e4569c';
 let assetsSettled = false;
 loadAssets(value => { document.getElementById('loading-progress').style.width = `${value*100}%`; }).then(() => { assetsSettled = true; });
-import * as livestock from './game/systems/livestock.js';
-import { livestockViews, animalBubbles, hitTestAnimalBubble, hitTestLivestock, hitTestZone } from './render/livestockView.js';
-import { mapInput, canvasInput, isPortraitRotated, bindLandscape } from './ui/inputMap.js';
-import { CROPS, GAME, ANIMALS, PRODUCTS, ZONE_NAMES, formatMs, slotCount, slotUnlockLevel } from './game/config.js';
-import { createInitialState } from './game/state.js';
-import { loadState, saveState, bindAutoSave, clearSave } from './game/save.js';
-import { plant, harvest, getPlotView, forceRipe } from './game/systems/farm.js';
-import { buySeed } from './game/systems/economy.js';
-import { addXp } from './game/systems/progression.js';
-import { createRenderer } from './render/canvas.js';
-import { computeLayout, hitTestPlot, clampCamera, coverMinZoom, homeCamera, cameraForZone, interpolateCamera, WORLD, toWorld, drawFarm } from './render/farmView.js';
-import { createEffects } from './render/effects.js';
-import { MAP_LAYOUT } from './render/mapLayout.js';
-import { updateHud } from './ui/hud.js';
-import { renderShop, renderBag, renderMore, renderSeedTray, setActiveTab } from './ui/panels.js';
-import { toast, showLevelUp, hideLevelUp } from './ui/toast.js';
-import {createNaturalDialogs} from './ui/naturalDialogs.js';
-import {createNaturalCommerce} from './ui/naturalCommerce.js';
-import {initNaturalChrome} from './ui/naturalChrome.js';
+import * as livestock from './game/systems/livestock.js?v=b5e861e4569c';
+import { livestockViews, animalBubbles, hitTestAnimalBubble, hitTestLivestock, hitTestZone } from './render/livestockView.js?v=b5e861e4569c';
+import { mapInput, canvasInput, isPortraitRotated, bindLandscape } from './ui/inputMap.js?v=b5e861e4569c';
+import { CROPS, GAME, ANIMALS, PRODUCTS, ZONE_NAMES, formatMs, slotCount, slotUnlockLevel } from './game/config.js?v=b5e861e4569c';
+import { createInitialState } from './game/state.js?v=b5e861e4569c';
+import { loadState, saveState, bindAutoSave, clearSave } from './game/save.js?v=b5e861e4569c';
+import { plant, harvest, getPlotView, forceRipe } from './game/systems/farm.js?v=b5e861e4569c';
+import { buySeed } from './game/systems/economy.js?v=b5e861e4569c';
+import { addXp } from './game/systems/progression.js?v=b5e861e4569c';
+import { createRenderer } from './render/canvas.js?v=b5e861e4569c';
+import { computeLayout, hitTestPlot, clampCamera, coverMinZoom, homeCamera, cameraForZone, interpolateCamera, WORLD, toWorld, drawFarm } from './render/farmView.js?v=b5e861e4569c';
+import { createEffects } from './render/effects.js?v=b5e861e4569c';
+import { MAP_LAYOUT } from './render/mapLayout.js?v=b5e861e4569c';
+import { updateHud } from './ui/hud.js?v=b5e861e4569c';
+import { renderShop, renderBag, renderMore, renderSeedTray, setActiveTab } from './ui/panels.js?v=b5e861e4569c';
+import { toast, showLevelUp, hideLevelUp } from './ui/toast.js?v=b5e861e4569c';
+import {createNaturalDialogs} from './ui/naturalDialogs.js?v=b5e861e4569c';
+import {createNaturalCommerce} from './ui/naturalCommerce.js?v=b5e861e4569c';
+import {initNaturalChrome} from './ui/naturalChrome.js?v=b5e861e4569c';
 
 const canvas = document.getElementById('farm-canvas');
 const renderer = createRenderer(canvas);
@@ -51,7 +51,7 @@ function setSeedTray(value){trayOpen=!!value;if(!trayOpen)selectedPlotIndex=-1;a
 function setChrome(value){chromeVisible=!!value;app.classList.toggle('chrome-hidden',!chromeVisible);}
 function setFarmMode(value){farmMode=!!value;if(!farmMode)setSeedTray(false);}
 function enterFarmMode(index=-1){switchTab('farm');farmMode=true;selectedSeed=firstOwnedSeed(state);selectedPlotIndex=index;setSeedTray(true);cameraTween={start:performance.now(),from:{...camera},id:'farm'};refreshUI();}
-function openShopTab(tab='seeds',source=null){shopSource=source;shopTab=tab;const list=document.getElementById('shop-list');if(list)list.scrollTop=0;switchTab('shop');}
+function openShopTab(tab='seeds',source=null){shopSource=source;shopTab=tab;const list=document.getElementById('shop-list');if(list){list.scrollTop=0;list.scrollLeft=0;}switchTab('shop');}
 function closeShop(){const source=shopSource;shopSource=null;switchTab('farm');if(source)openZone(source);}
 function renderStockPicker(){
   if(!stockSelection)return;
@@ -391,7 +391,7 @@ function bindCamera() {
 
 function bindUi() {
   document.getElementById('animal-buy').onclick=()=>openShopTab('animals',openZoneId);
-  document.querySelectorAll('[data-shop-tab]').forEach(b=>b.onclick=()=>{shopTab=b.dataset.shopTab;const list=document.getElementById('shop-list');if(list)list.scrollTop=0;refreshUI();});
+  document.querySelectorAll('[data-shop-tab]').forEach(b=>b.onclick=()=>{shopTab=b.dataset.shopTab;const list=document.getElementById('shop-list');if(list){list.scrollTop=0;list.scrollLeft=0;}refreshUI();});
   document.getElementById('btn-close-mill').onclick=closeMill;
   millPanel.onclick=e=>{if(e.target===millPanel)closeMill();};
   millPanel.querySelectorAll('[data-mill-material]').forEach(b=>b.onclick=()=>runLivestock('craftFeed',b.dataset.millMaterial));
@@ -399,7 +399,7 @@ function bindUi() {
   bubble.onclick=e=>{if(e.target===bubble)closeZone();};
 
   const marketScroll=document.getElementById('animal-slots');let marketDrag=null,marketSuppress=false;
-  marketScroll.addEventListener('pointerdown',e=>{marketSuppress=false;if(!marketScroll.classList.contains('market-slots'))return;marketDrag={id:e.pointerId,x:mapInput(e.clientX,e.clientY).x,scroll:marketScroll.scrollLeft};marketSuppress=false;});
+  marketScroll.addEventListener('pointerdown',e=>{marketSuppress=false;if(naturalDialogs||!marketScroll.classList.contains('market-slots'))return;marketDrag={id:e.pointerId,x:mapInput(e.clientX,e.clientY).x,scroll:marketScroll.scrollLeft};marketSuppress=false;});
   marketScroll.addEventListener('pointermove',e=>{if(!marketDrag)return;const dx=mapInput(e.clientX,e.clientY).x-marketDrag.x;if(Math.abs(dx)>6){marketSuppress=true;marketScroll.setPointerCapture(e.pointerId);marketScroll.scrollLeft=marketDrag.scroll-dx;}});
   for(const type of ['pointerup','pointercancel'])marketScroll.addEventListener(type,()=>{marketDrag=null;});
   marketScroll.addEventListener('click',e=>{if(marketSuppress&&marketScroll.classList.contains('market-slots')){e.preventDefault();e.stopImmediatePropagation();marketSuppress=false;}},true);

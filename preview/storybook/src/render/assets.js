@@ -1,4 +1,4 @@
-import { MAP_LAYOUT } from './mapLayout.js';
+import { MAP_LAYOUT } from './mapLayout.js?v=b5e861e4569c';
 const paths = [
   "icons/feed.webp",
   "icons/egg.webp",

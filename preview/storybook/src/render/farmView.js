@@ -1,14 +1,14 @@
-import { drawFarmer } from './farmerView.js';
-import { makeZones, drawLivestock, walkPolygon, ANIMAL_BUBBLE_RADIUS } from './livestockView.js';
-import { drawAnchored } from './assets.js';
-import { drawScenery } from './scenery.js';
-import { formatMs } from '../game/config.js';
-import { getPlotView } from '../game/systems/farm.js';
-import { fillRoundRect, drawText } from './draw.js';
+import { drawFarmer } from './farmerView.js?v=b5e861e4569c';
+import { makeZones, drawLivestock, walkPolygon, ANIMAL_BUBBLE_RADIUS } from './livestockView.js?v=b5e861e4569c';
+import { drawAnchored } from './assets.js?v=b5e861e4569c';
+import { drawScenery } from './scenery.js?v=b5e861e4569c';
+import { formatMs } from '../game/config.js?v=b5e861e4569c';
+import { getPlotView } from '../game/systems/farm.js?v=b5e861e4569c';
+import { fillRoundRect, drawText } from './draw.js?v=b5e861e4569c';
 
-import { MAP_LAYOUT } from './mapLayout.js';
-import { drawStorybookSoil } from './storybookScenery.js';
-import {drawNaturalBeds,drawNaturalCrops} from './naturalFields.js';
+import { MAP_LAYOUT } from './mapLayout.js?v=b5e861e4569c';
+import { drawStorybookSoil } from './storybookScenery.js?v=b5e861e4569c';
+import {drawNaturalBeds,drawNaturalCrops} from './naturalFields.js?v=b5e861e4569c';
 export const WORLD = MAP_LAYOUT.WORLD;
 // Cover the viewport so painted map edges and the green letterbox never show.
 export function coverMinZoom(w, h) {
