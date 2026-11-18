@@ -1,0 +1,63 @@
+.natural-commerce-overlay{position:absolute;inset:0;z-index:12;display:flex;align-items:center;justify-content:center;padding:18px 28px;background:#20311e8c;backdrop-filter:blur(2px)}
+.natural-commerce-overlay:has(>.hidden){display:none}
+.storybook .natural-commerce,.storybook #panel-mill.natural-mill .modal-card{position:relative;inset:auto;width:min(1080px,100%);height:min(510px,100%);max-height:100%;border:2px solid #bb8748;border-radius:25px;padding:16px 22px 12px;background:linear-gradient(110deg,#fff8e7,#fff2d7 65%,#f9e7c1);color:#694326;box-shadow:inset 0 0 0 5px #efce96,inset 0 0 0 7px #fff2d5,0 12px 45px #17271355;overflow:hidden;display:flex;flex-direction:column;margin:0;text-align:left}
+.natural-commerce::before,.natural-mill .modal-card::before{content:"";position:absolute;inset:8px;border:1px solid #dbb57c;border-radius:17px;pointer-events:none}
+.natural-commerce .sheet-head,.natural-mill .mill-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;min-height:70px;padding:0 0 12px;border-bottom:1px solid #dfc394;margin:0 2px 12px;flex:none}
+.natural-commerce .sheet-head h2,.natural-mill .mill-head h2{display:flex;align-items:center;gap:12px;grid-row:1;grid-column:1;margin:0;font-size:27px;line-height:1.25;color:#6b401e}
+.commerce-heading-icon{display:grid;place-items:center;width:53px;height:58px;font-size:39px;flex:none}
+.natural-commerce h2 small,.natural-mill h2 small{display:block;font-size:13px;line-height:1.5;color:#94704c;margin-top:3px;font-weight:500}
+.natural-commerce .sheet-close,.natural-mill .sheet-close{grid-column:3;grid-row:1;display:grid;place-items:center;width:43px;height:43px;min-width:43px;border:1px solid #b58b53;border-radius:13px;background:linear-gradient(#fff4d6,#f0cf94);box-shadow:inset 0 1px #fff9e9,0 2px 2px #865a2420;font-size:30px;color:#76502c;line-height:1;padding:0;margin:0;cursor:pointer}
+#commerce-coins,#commerce-bag-count,.natural-mill #mill-inventory{grid-column:2;grid-row:1;font-size:13px;border:1px solid #dab880;border-radius:20px;padding:7px 12px;background:#fff7e2;color:#997348;white-space:nowrap;margin:0}
+.natural-mill #mill-inventory .item-count{background:transparent;padding:0}.natural-mill #mill-inventory img{width:26px;height:26px}
+.commerce-price{display:inline-flex;align-items:center;gap:5px;color:#a1742e;font-size:17px;white-space:nowrap}
+.commerce-tabs,.natural-commerce .shop-tabs{display:flex;gap:10px;flex:none;padding:0 2px 12px;margin:0}
+.commerce-tabs button,.natural-commerce .shop-tabs button{flex:1;font:650 14px var(--font);padding:7px 12px;min-height:35px;border:1px solid #d5bb8b;border-radius:15px;background:#f9edcf;color:#96754b;cursor:pointer;box-shadow:inset 0 1px #fffdf1}
+.commerce-tabs button[aria-pressed=true],.natural-commerce .shop-tabs button[aria-selected=true]{background:#e0ebbf;border-color:#a8be78;color:#5c7c37;box-shadow:inset 0 1px #f3f8dd}
+.natural-commerce #shop-list,.natural-commerce #bag-list{display:flex;flex-direction:row;align-items:stretch;gap:14px;flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;padding:2px 2px 9px;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:#cdb17b transparent;overscroll-behavior:contain;touch-action:pan-x}
+.natural-commerce .sheet-body{display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:0}
+.commerce-card{position:relative;display:flex;flex-direction:column;align-items:stretch;flex:0 0 calc((100% - 28px)/3);min-width:0;padding:13px 15px 12px;border:1px solid #ddbd8c;border-radius:20px;background:linear-gradient(135deg,#fffbee,#fff4dd);box-shadow:inset 0 1px #fffef7,0 2px 2px #b3884220;scroll-snap-align:start;text-align:center;color:#6b4526}
+.commerce-card-top{display:flex;justify-content:space-between;align-items:center;gap:5px;font-size:11px;color:#aa8966;min-height:25px;flex:none}
+.commerce-art{display:flex;align-items:center;justify-content:center;align-self:center;flex:1;min-height:55px;max-height:113px;width:110px;font-size:56px;padding:6px 0}
+.commerce-art img{display:block;object-fit:contain;width:100%;height:100%;max-height:95px}
+.commerce-art .item-emoji{font-size:51px;line-height:1}
+.commerce-card h3{font-size:19px;line-height:1.35;margin:5px 0;color:#79512b;flex:none}
+.commerce-description,.commerce-owned{font-size:12px;line-height:1.6;color:#a18a65;margin:3px 0;flex:none}
+.commerce-owned b{color:#8a6437}
+.commerce-card-action{display:flex;align-items:center;gap:13px;margin-top:auto;padding-top:10px;min-height:48px;flex:none}
+.commerce-card-action .natural-primary{width:auto;flex:1;min-width:0}
+.commerce-locked{background:#f3ead5;box-shadow:none}.commerce-locked>.commerce-art{opacity:.6}
+.commerce-quantity{font-weight:700;font-size:19px;color:#7d9950}
+.commerce-inventory .commerce-art{max-height:145px;width:124px}.commerce-inventory .commerce-art img{max-height:118px}
+.commerce-inventory-note{font-size:11px;color:#ad9875;margin:auto 0 4px;padding-top:14px}
+.commerce-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#a08560;min-height:28px;font-size:11px;line-height:1.4;padding:7px 4px 0;flex:none}
+.commerce-footer .natural-secondary{min-height:34px;font-size:13px;padding:5px 16px}
+.commerce-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;color:#a58d6b}.commerce-empty>span{font-size:53px}.commerce-empty h3{font-size:18px;margin:10px 0 3px}.commerce-empty p{font-size:13px}
+.storybook #panel-mill.natural-mill{padding:18px 28px;background:#20311e8c;backdrop-filter:blur(2px)}
+.natural-mill .mill-body{display:flex;align-items:stretch;gap:18px;flex:1;overflow-x:hidden;overflow-y:auto;padding:2px 2px 8px;min-height:0}
+.natural-mill .commerce-card{flex:1;min-width:0}.commerce-recipe .commerce-card-action .natural-primary{width:100%}
+.commerce-formula{display:flex;align-items:center;justify-content:center;gap:17px;flex:1;min-height:80px}
+.commerce-formula>div{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:16px;color:#87613a}
+.commerce-formula .commerce-art{height:100px;min-height:0;width:85px;flex:none}.commerce-formula .commerce-art img{max-height:80px}
+.formula-arrow{font-size:26px;color:#c1ab7f}
+.natural-commerce button:focus-visible,.natural-mill button:focus-visible{outline:3px solid #6c8e43;outline-offset:2px}
+.natural-commerce [hidden]{display:none!important}
+@media(max-height:480px){
+ .natural-commerce-overlay,.storybook #panel-mill.natural-mill{padding:10px 16px}
+ .storybook .natural-commerce,.storybook #panel-mill.natural-mill .modal-card{padding:10px 17px 8px;border-radius:21px}
+ .natural-commerce .sheet-head,.natural-mill .mill-head{min-height:54px;padding-bottom:7px;margin-bottom:8px;gap:9px}
+ .natural-commerce .sheet-head h2,.natural-mill .mill-head h2{font-size:23px;gap:10px}.commerce-heading-icon{width:40px;height:43px;font-size:33px}
+ .natural-commerce h2 small,.natural-mill h2 small{font-size:11px;margin-top:1px}
+ .natural-commerce .sheet-close,.natural-mill .sheet-close{width:37px;height:37px;min-width:37px;font-size:27px}
+ #commerce-coins,#commerce-bag-count,.natural-mill #mill-inventory{padding:5px 9px;font-size:11px}.commerce-price{font-size:16px}
+ .commerce-tabs,.natural-commerce .shop-tabs{gap:8px;padding-bottom:7px}.commerce-tabs button,.natural-commerce .shop-tabs button{min-height:30px;font-size:12px;padding:4px 9px;border-radius:12px}
+ .natural-commerce #shop-list,.natural-commerce #bag-list{gap:11px;padding-bottom:6px}
+ .commerce-card{flex-basis:calc((100% - 22px)/3);padding:8px 11px;border-radius:16px}
+ .commerce-card-top{min-height:21px;font-size:10px}.commerce-card h3{font-size:16px;margin:3px 0}
+ .commerce-art{min-height:35px;max-height:62px;width:70px;padding:3px 0;font-size:37px}.commerce-art img{max-height:56px}.commerce-art .item-emoji{font-size:35px}
+ .commerce-description,.commerce-owned{font-size:11px;line-height:1.45;margin:2px 0}
+ .commerce-card-action{padding-top:5px;min-height:38px;gap:8px}.commerce-card-action .natural-primary{font-size:14px;min-height:34px;padding:5px 9px}
+ .commerce-inventory .commerce-art{max-height:87px;width:90px}.commerce-inventory .commerce-art img{max-height:80px}.commerce-inventory-note{font-size:10px;padding-top:8px}
+ .commerce-quantity{font-size:17px}.commerce-footer{min-height:21px;padding-top:5px;font-size:10px}.commerce-footer .natural-secondary{min-height:29px;padding:4px 12px;font-size:12px}
+ .natural-mill .mill-body{gap:11px;padding-bottom:6px}.commerce-formula{gap:13px;min-height:65px}.commerce-formula>div{font-size:14px;gap:5px}.commerce-formula .commerce-art{width:70px;height:77px;max-height:77px}.commerce-formula .commerce-art img{max-height:66px}
+ .natural-commerce .commerce-recipe .commerce-formula{gap:9px;min-height:60px}.natural-commerce .commerce-recipe .commerce-formula>div{font-size:12px;gap:3px}.natural-commerce .commerce-recipe .commerce-art{height:58px;max-height:58px;width:49px}.natural-commerce .commerce-recipe .commerce-art img{max-height:48px}
+}

@@ -1,0 +1,300 @@
+{
+  "version": 8,
+  "files": {
+    "animals/carp-0.webp": {
+      "w": 334,
+      "h": 209,
+      "bytes": 10726
+    },
+    "animals/carp-1.webp": {
+      "w": 331,
+      "h": 222,
+      "bytes": 10274
+    },
+    "animals/chick.webp": {
+      "w": 141,
+      "h": 163,
+      "bytes": 6074
+    },
+    "animals/chicken-0.webp": {
+      "w": 208,
+      "h": 262,
+      "bytes": 10500
+    },
+    "animals/chicken-1.webp": {
+      "w": 212,
+      "h": 223,
+      "bytes": 9838
+    },
+    "animals/chicken-brown.webp": {
+      "w": 212,
+      "h": 243,
+      "bytes": 10578
+    },
+    "animals/cow-0.webp": {
+      "w": 302,
+      "h": 225,
+      "bytes": 15476
+    },
+    "animals/cow-1.webp": {
+      "w": 302,
+      "h": 225,
+      "bytes": 14210
+    },
+    "animals/crucian-0.webp": {
+      "w": 341,
+      "h": 209,
+      "bytes": 11248
+    },
+    "animals/crucian-1.webp": {
+      "w": 325,
+      "h": 209,
+      "bytes": 10358
+    },
+    "animals/egg.webp": {
+      "w": 140,
+      "h": 174,
+      "bytes": 4474
+    },
+    "animals/goldfish-0.webp": {
+      "w": 328,
+      "h": 226,
+      "bytes": 11506
+    },
+    "animals/goldfish-1.webp": {
+      "w": 321,
+      "h": 225,
+      "bytes": 11416
+    },
+    "animals/pig-0.webp": {
+      "w": 236,
+      "h": 202,
+      "bytes": 9506
+    },
+    "animals/pig-1.webp": {
+      "w": 245,
+      "h": 203,
+      "bytes": 9220
+    },
+    "animals/sheep-0.webp": {
+      "w": 272,
+      "h": 228,
+      "bytes": 10306
+    },
+    "animals/sheep-1.webp": {
+      "w": 274,
+      "h": 233,
+      "bytes": 10604
+    },
+    "bg/meadow.webp": {
+      "w": 1152,
+      "h": 864,
+      "bytes": 183332
+    },
+    "crops/cabbage-0.webp": {
+      "w": 103,
+      "h": 91,
+      "bytes": 2148
+    },
+    "crops/cabbage-1.webp": {
+      "w": 229,
+      "h": 209,
+      "bytes": 8932
+    },
+    "crops/cabbage-2.webp": {
+      "w": 197,
+      "h": 252,
+      "bytes": 9718
+    },
+    "crops/carrot-0.webp": {
+      "w": 121,
+      "h": 111,
+      "bytes": 2866
+    },
+    "crops/carrot-1.webp": {
+      "w": 169,
+      "h": 212,
+      "bytes": 12496
+    },
+    "crops/carrot-2.webp": {
+      "w": 168,
+      "h": 267,
+      "bytes": 13470
+    },
+    "crops/corn-0.webp": {
+      "w": 109,
+      "h": 98,
+      "bytes": 2496
+    },
+    "crops/corn-1.webp": {
+      "w": 156,
+      "h": 280,
+      "bytes": 15658
+    },
+    "crops/corn-2.webp": {
+      "w": 149,
+      "h": 280,
+      "bytes": 17868
+    },
+    "crops/potato-0.webp": {
+      "w": 103,
+      "h": 106,
+      "bytes": 3342
+    },
+    "crops/potato-1.webp": {
+      "w": 214,
+      "h": 227,
+      "bytes": 16042
+    },
+    "crops/potato-2.webp": {
+      "w": 221,
+      "h": 280,
+      "bytes": 26830
+    },
+    "crops/pumpkin-0.webp": {
+      "w": 91,
+      "h": 87,
+      "bytes": 2152
+    },
+    "crops/pumpkin-1.webp": {
+      "w": 203,
+      "h": 205,
+      "bytes": 11810
+    },
+    "crops/pumpkin-2.webp": {
+      "w": 235,
+      "h": 243,
+      "bytes": 14816
+    },
+    "crops/strawberry-0.webp": {
+      "w": 113,
+      "h": 113,
+      "bytes": 3534
+    },
+    "crops/strawberry-1.webp": {
+      "w": 207,
+      "h": 198,
+      "bytes": 11788
+    },
+    "crops/strawberry-2.webp": {
+      "w": 222,
+      "h": 235,
+      "bytes": 15154
+    },
+    "crops/tomato-0.webp": {
+      "w": 101,
+      "h": 96,
+      "bytes": 2734
+    },
+    "crops/tomato-1.webp": {
+      "w": 207,
+      "h": 237,
+      "bytes": 16924
+    },
+    "crops/tomato-2.webp": {
+      "w": 224,
+      "h": 262,
+      "bytes": 18820
+    },
+    "crops/wheat-0.webp": {
+      "w": 111,
+      "h": 100,
+      "bytes": 2446
+    },
+    "crops/wheat-1.webp": {
+      "w": 123,
+      "h": 280,
+      "bytes": 13086
+    },
+    "crops/wheat-2.webp": {
+      "w": 157,
+      "h": 280,
+      "bytes": 19142
+    },
+    "icons/beef.webp": {
+      "w": 217,
+      "h": 175,
+      "bytes": 5954
+    },
+    "icons/egg.webp": {
+      "w": 256,
+      "h": 241,
+      "bytes": 11512
+    },
+    "icons/feed.webp": {
+      "w": 193,
+      "h": 211,
+      "bytes": 7390
+    },
+    "icons/fish.webp": {
+      "w": 235,
+      "h": 178,
+      "bytes": 8824
+    },
+    "icons/pork.webp": {
+      "w": 221,
+      "h": 184,
+      "bytes": 6804
+    },
+    "icons/wool.webp": {
+      "w": 201,
+      "h": 206,
+      "bytes": 12870
+    },
+    "pens/coop-front.webp": {
+      "w": 930,
+      "h": 783,
+      "bytes": 33640
+    },
+    "pens/coop.webp": {
+      "w": 930,
+      "h": 783,
+      "bytes": 99018
+    },
+    "pens/cow-front.webp": {
+      "w": 1000,
+      "h": 709,
+      "bytes": 34086
+    },
+    "pens/cow.webp": {
+      "w": 1000,
+      "h": 709,
+      "bytes": 107788
+    },
+    "pens/pig-front.webp": {
+      "w": 1000,
+      "h": 670,
+      "bytes": 39418
+    },
+    "pens/pig.webp": {
+      "w": 1000,
+      "h": 670,
+      "bytes": 117478
+    },
+    "pens/pond.webp": {
+      "w": 1000,
+      "h": 581,
+      "bytes": 117284
+    },
+    "pens/sheep-front.webp": {
+      "w": 1000,
+      "h": 660,
+      "bytes": 52794
+    },
+    "pens/sheep.webp": {
+      "w": 1000,
+      "h": 660,
+      "bytes": 104848
+    },
+    "tiles/soil-field.webp": {
+      "w": 979,
+      "h": 560,
+      "bytes": 65666
+    },
+    "tiles/soil.webp": {
+      "w": 640,
+      "h": 366,
+      "bytes": 41800
+    }
+  }
+}

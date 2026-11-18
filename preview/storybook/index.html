@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script>const previewURL=new URL(location.href);previewURL.searchParams.set('scene','storybook');history.replaceState(null,'',previewURL);</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="开心农场：种地、收获、卖钱、升级的 H5 小游戏">
+  <title>开心农场</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌾%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/natural-dialogs.css">
+  <link rel="stylesheet" href="css/natural-commerce.css">
+  <link rel="stylesheet" href="css/natural-chrome.css">
+</head>
+<body>
+  <div id="loading-screen" class="loading-screen" role="status" aria-label="农场加载中">
+    <div class="loading-sun" aria-hidden="true">☀️</div>
+    <div class="loading-card">
+      <div class="loading-wheat" aria-hidden="true">🌾</div>
+      <h1>开心农场</h1>
+      <p>种下小小期待，收获满满快乐</p>
+      <div class="loading-track"><div id="loading-progress"></div></div>
+      <span>正在唤醒农场…</span>
+    </div>
+  </div>
+  <div id="app" inert aria-hidden="true">
+    <header class="hud" role="banner">
+      <strong class="hud-title">开心农场</strong>
+      <div class="hud-coins" title="金币">
+        <span class="coin-icon" aria-hidden="true">🪙</span>
+        <span id="hud-coins">0</span>
+      </div>
+      <div class="hud-xp" title="等级与经验">
+        <span id="hud-level">Lv.1</span>
+        <div class="xp-bar" aria-hidden="true">
+          <div id="hud-xp-fill" class="xp-fill"></div>
+        </div>
+        <span id="hud-xp-text">0/35</span>
+      </div>
+    </header>
+
+    <main id="stage" class="stage">
+      <canvas id="farm-canvas" width="390" height="520">你的浏览器不支持 Canvas，请换一个现代浏览器。</canvas>
+      <div id="seed-tray" class="seed-tray" aria-label="种子托盘"></div>
+    </main>
+
+    <nav class="zone-actions" aria-label="区域跳转">
+      <button class="zone-jump" data-zone="market" aria-label="前往集市">🧺<span>集市</span></button>
+      <button class="zone-jump" data-zone="house" aria-label="前往小屋">🏠<span>小屋</span></button>
+      <button class="zone-jump" data-zone="mill" aria-label="前往加工厂">⚙️<span>加工厂</span></button>
+      <button class="zone-jump" data-zone="farm" aria-label="前往农田">🌾<span>农田</span></button>
+      <button class="zone-jump" data-zone="pond" aria-label="前往鱼塘">🐟<span>鱼塘</span></button>
+      <button class="zone-jump" data-zone="pig" aria-label="前往猪圈">🐷<span>猪圈</span></button>
+      <button class="zone-jump" data-zone="cow" aria-label="前往牛棚">🐮<span>牛棚</span></button>
+      <button class="zone-jump" data-zone="chicken" aria-label="前往鸡舍">🐔<span>鸡舍</span></button>
+      <button class="zone-jump" data-zone="sheep" aria-label="前往羊圈">🐑<span>羊圈</span></button>
+    </nav>
+    <nav class="side-actions" aria-label="农场功能">
+      <button type="button" class="tab" data-tab="shop" aria-label="商店">🛒<span>商店</span></button>
+      <button type="button" id="warehouse-button" class="tab" data-tab="bag" aria-label="仓库">🎒<span>仓库</span></button>
+      <button type="button" class="tab" data-tab="more" aria-label="更多">✨<span>更多</span></button>
+    </nav>
+
+    <section id="panel-shop" class="sheet hidden" role="dialog" aria-label="商店">
+      <header class="sheet-head">
+        <h2>🛒 商店</h2>
+        <p>购买种子、幼畜鱼苗和饲料</p>
+        <button type="button" class="sheet-close" aria-label="关闭面板">×</button>
+      </header>
+      <nav class="shop-tabs" aria-label="商店分类"><button data-shop-tab="seeds">种子</button><button data-shop-tab="animals">动物</button><button data-shop-tab="feed">饲料</button></nav>
+      <div id="shop-list" class="card-list"></div>
+    </section>
+
+    <section id="panel-bag" class="sheet hidden" role="dialog" aria-label="仓库">
+      <header class="sheet-head">
+        <h2>🎒 仓库</h2>
+        <p>保存收获，前往集市交易</p>
+        <button type="button" class="sheet-close" aria-label="关闭面板">×</button>
+      </header>
+      <div class="sheet-body"><p id="bag-empty" class="empty-hint">仓库暂无产品，去农田、围栏或鱼塘收获吧</p>
+      <div id="bag-list" class="card-list"></div></div>
+    </section>
+
+    <section id="panel-more" class="sheet hidden" role="dialog" aria-label="更多">
+      <header class="sheet-head">
+        <h2>✨ 更多</h2>
+        <p>农场会一点点长大</p>
+        <button type="button" class="sheet-close" aria-label="关闭面板">×</button>
+      </header>
+      <div class="sheet-body"><div class="more-block">
+        <h3>怎么玩</h3>
+        <ol class="howto">
+          <li>在商店购买种子和幼畜，仓库保存收获，集市出售产品。</li>
+          <li>点击农田进入耕作模式，再点地块种植或收获；点击田外退出并行走。</li>
+          <li>作物按真实时间生长，关掉页面也会继续成熟。</li>
+          <li>成熟后点击地块收获，前往集市卖给客人换金币。</li>
+          <li>收获获得经验，升级后逐步解锁更多作物。</li>
+          <li>购买幼畜或鱼苗，点击对应院落，在面板中放入。</li>
+          <li>点击院落气泡里的「喂饲料」，喂食后开始计时，离线继续。</li>
+          <li>就绪后在气泡中收获；羊可反复剪毛，小鸡可反复产蛋，每轮重新喂食。「收羊肉」「收鸡肉」会移除对应动物。</li>
+          <li>饲料可购买，也可用仓库小麦×2或玉米×1制作。左侧按钮可快捷跳转。</li>
+        </ol>
+      </div>
+      <div class="more-block">
+        <h3>即将推出：建筑</h3>
+        <ul id="coming-buildings" class="coming-list"></ul>
+      </div>
+      <div class="more-block">
+        <h3>即将推出：交易</h3>
+        <p id="coming-trade" class="coming-text"></p>
+      </div>
+      <div class="more-block danger-block">
+        <h3>存档</h3>
+        <p class="coming-text">进度会自动保存在本机浏览器中。重新开始会清空当前进度。</p>
+        <button type="button" id="btn-reset" class="btn btn-danger">重新开始</button>
+        <p id="version-label" class="version">版本 1.0 · MVP</p>
+      </div>
+      </div>
+    </section>
+
+    <div id="panel-animal" class="animal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="animal-title">
+      <section class="animal-panel">
+        <header class="animal-head"><h2 id="animal-title"></h2><button id="animal-buy" class="pill-primary">购买</button><button id="btn-close-animal" class="sheet-close" type="button" aria-label="关闭动物面板">×</button><p id="animal-inventory"></p></header>
+        <div id="animal-slots"></div>
+      </section>
+    </div>
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+
+    <div id="panel-mill" class="modal hidden" role="dialog" aria-modal="true" aria-label="饲料加工厂">
+      <div class="modal-card">
+        <header class="mill-head"><h2>⚙️ 饲料加工厂</h2><button type="button" id="btn-close-mill" class="sheet-close" aria-label="关闭加工厂">×</button>
+        <p id="mill-inventory"></p></header><div class="mill-body">
+        <div class="recipe-row"><div data-recipe="wheat"></div><button type="button" class="pill-primary" data-mill-material="wheat">制作</button></div>
+        <div class="recipe-row"><div data-recipe="corn"></div><button type="button" class="pill-primary" data-mill-material="corn">制作</button></div>
+        </div>
+      </div>
+    </div>
+    <div id="modal-levelup" class="modal hidden" role="dialog" aria-modal="true" aria-label="升级">
+      <div class="modal-card">
+        <div class="levelup-emoji" aria-hidden="true">🎉</div>
+        <h2>升级啦！</h2>
+        <p class="levelup-level">到达 2 级</p>
+        <p class="levelup-unlock"></p>
+        <button type="button" id="btn-close-levelup" class="btn btn-buy">继续经营</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
