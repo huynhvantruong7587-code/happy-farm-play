@@ -1,28 +1,28 @@
-import { besideZone, moveFarmer, farmerFacing } from './render/farmerView.js?v=0019904d88fd';
-import { itemCount } from './ui/icons.js?v=0019904d88fd';
-import { tickMarket, sellToCustomer } from './game/systems/market.js?v=0019904d88fd';
-import { loadAssets } from './render/assets.js?v=0019904d88fd';
+import { besideZone, moveFarmer, farmerFacing } from './render/farmerView.js?v=f4838dd5f949';
+import { itemCount } from './ui/icons.js?v=f4838dd5f949';
+import { tickMarket, sellToCustomer } from './game/systems/market.js?v=f4838dd5f949';
+import { loadAssets } from './render/assets.js?v=f4838dd5f949';
 let assetsSettled = false;
 loadAssets(value => { document.getElementById('loading-progress').style.width = `${value*100}%`; }).then(() => { assetsSettled = true; });
-import * as livestock from './game/systems/livestock.js?v=0019904d88fd';
-import { livestockViews, animalBubbles, hitTestAnimalBubble, hitTestLivestock, hitTestZone } from './render/livestockView.js?v=0019904d88fd';
-import { mapInput, canvasInput, isPortraitRotated, bindLandscape } from './ui/inputMap.js?v=0019904d88fd';
-import { CROPS, GAME, ANIMALS, PRODUCTS, ZONE_NAMES, formatMs, slotCount, slotUnlockLevel } from './game/config.js?v=0019904d88fd';
-import { createInitialState } from './game/state.js?v=0019904d88fd';
-import { loadState, saveState, bindAutoSave, clearSave } from './game/save.js?v=0019904d88fd';
-import { plant, harvest, getPlotView, forceRipe } from './game/systems/farm.js?v=0019904d88fd';
-import { buySeed } from './game/systems/economy.js?v=0019904d88fd';
-import { addXp } from './game/systems/progression.js?v=0019904d88fd';
-import { createRenderer } from './render/canvas.js?v=0019904d88fd';
-import { computeLayout, hitTestPlot, clampCamera, coverMinZoom, homeCamera, cameraForZone, interpolateCamera, WORLD, toWorld, drawFarm } from './render/farmView.js?v=0019904d88fd';
-import { createEffects } from './render/effects.js?v=0019904d88fd';
-import { MAP_LAYOUT } from './render/mapLayout.js?v=0019904d88fd';
-import { updateHud } from './ui/hud.js?v=0019904d88fd';
-import { renderShop, renderBag, renderMore, renderSeedTray, setActiveTab } from './ui/panels.js?v=0019904d88fd';
-import { toast, showLevelUp, hideLevelUp } from './ui/toast.js?v=0019904d88fd';
-import {createNaturalDialogs} from './ui/naturalDialogs.js?v=0019904d88fd';
-import {createNaturalCommerce} from './ui/naturalCommerce.js?v=0019904d88fd';
-import {initNaturalChrome} from './ui/naturalChrome.js?v=0019904d88fd';
+import * as livestock from './game/systems/livestock.js?v=f4838dd5f949';
+import { livestockViews, animalBubbles, hitTestAnimalBubble, hitTestLivestock, hitTestZone } from './render/livestockView.js?v=f4838dd5f949';
+import { mapInput, canvasInput, isPortraitRotated, bindLandscape } from './ui/inputMap.js?v=f4838dd5f949';
+import { CROPS, GAME, ANIMALS, PRODUCTS, ZONE_NAMES, formatMs, slotCount, slotUnlockLevel } from './game/config.js?v=f4838dd5f949';
+import { createInitialState } from './game/state.js?v=f4838dd5f949';
+import { loadState, saveState, bindAutoSave, clearSave } from './game/save.js?v=f4838dd5f949';
+import { plant, harvest, getPlotView, forceRipe } from './game/systems/farm.js?v=f4838dd5f949';
+import { buySeed } from './game/systems/economy.js?v=f4838dd5f949';
+import { addXp } from './game/systems/progression.js?v=f4838dd5f949';
+import { createRenderer } from './render/canvas.js?v=f4838dd5f949';
+import { computeLayout, hitTestPlot, clampCamera, coverMinZoom, homeCamera, cameraForZone, interpolateCamera, WORLD, toWorld, drawFarm } from './render/farmView.js?v=f4838dd5f949';
+import { createEffects } from './render/effects.js?v=f4838dd5f949';
+import { MAP_LAYOUT } from './render/mapLayout.js?v=f4838dd5f949';
+import { updateHud } from './ui/hud.js?v=f4838dd5f949';
+import { renderShop, renderBag, renderMore, renderSeedTray, setActiveTab } from './ui/panels.js?v=f4838dd5f949';
+import { toast, showLevelUp, hideLevelUp } from './ui/toast.js?v=f4838dd5f949';
+import {createNaturalDialogs} from './ui/naturalDialogs.js?v=f4838dd5f949';
+import {createNaturalCommerce} from './ui/naturalCommerce.js?v=f4838dd5f949';
+import {initNaturalChrome} from './ui/naturalChrome.js?v=f4838dd5f949';
 
 const canvas = document.getElementById('farm-canvas');
 const renderer = createRenderer(canvas);
@@ -34,6 +34,7 @@ let activeTab = 'farm';
 let farmMode=false, shopTab='seeds', shopSource=null, farmerTarget=null, farmerDirection='s', farmerWalking=false;
 let stockSelection=null;
 let trayOpen=false, chromeVisible=true, openZoneId=null;
+let seedTrayRelease=null;
 const app=document.getElementById('app'), bubble=document.getElementById('panel-animal');
 let naturalChrome=null;
 const naturalDialogs=MAP_LAYOUT.STYLE==='storybook'?createNaturalDialogs({
@@ -47,9 +48,25 @@ const naturalCommerce=MAP_LAYOUT.STYLE==='storybook'?createNaturalCommerce({
   onCraft:m=>runLivestock('craftFeed',m),onMarket:()=>{jumpTo('market');openZone('market');},
   onClose:panel=>panel==='shop'?closeShop():switchTab('farm'),
 }):null;
-function setSeedTray(value){trayOpen=!!value;if(!trayOpen)selectedPlotIndex=-1;app.classList.toggle('tray-open',trayOpen);}
+function setSeedTray(value){
+  const opening=!!value;
+  if(trayOpen&&!opening&&MAP_LAYOUT.STYLE==='storybook')seedTrayRelease={start:performance.now(),height:app.dataset.short==='true'?72:90};
+  if(opening)seedTrayRelease=null;
+  trayOpen=opening;if(!trayOpen)selectedPlotIndex=-1;app.classList.toggle('tray-open',trayOpen);
+  document.getElementById('seed-tray').setAttribute('aria-hidden',String(!trayOpen));
+}
 function setChrome(value){chromeVisible=!!value;app.classList.toggle('chrome-hidden',!chromeVisible);}
 function setFarmMode(value){farmMode=!!value;if(!farmMode)setSeedTray(false);}
+function cameraViewportHeight(height){
+  if(MAP_LAYOUT.STYLE!=='storybook')return height;
+  if(trayOpen)return height-(app.dataset.short==='true'?72:90);
+  if(seedTrayRelease){
+    const t=Math.min(1,(performance.now()-seedTrayRelease.start)/240);
+    if(t<1)return height-seedTrayRelease.height*(1-t)**2;
+    seedTrayRelease=null;
+  }
+  return height;
+}
 function enterFarmMode(index=-1){switchTab('farm');farmMode=true;selectedSeed=firstOwnedSeed(state);selectedPlotIndex=index;setSeedTray(true);cameraTween={start:performance.now(),from:{...camera},id:'farm'};refreshUI();}
 function openShopTab(tab='seeds',source=null){shopSource=source;shopTab=tab;const list=document.getElementById('shop-list');if(list){list.scrollTop=0;list.scrollLeft=0;}switchTab('shop');}
 function closeShop(){const source=shopSource;shopSource=null;switchTab('farm');if(source)openZone(source);}
@@ -284,6 +301,9 @@ function jumpTo(id) {
 function tap(x, y) {
   if (activeTab !== 'farm') { switchTab('farm'); return; }
   const hit=hitTestPlot(x,y,layout);
+  if(hit&&MAP_LAYOUT.STYLE==='storybook'&&getPlotView(state.plots[hit.index],Date.now()).status==='growing'){
+    toast(`还要再等 ${formatMs(getPlotView(state.plots[hit.index],Date.now()).remainingMs)}`);return;
+  }
   if(hit){if(!farmMode){
     if(MAP_LAYOUT.STYLE==='storybook'&&getPlotView(state.plots[hit.index],Date.now()).status==='ripe'){handleHarvest(hit.index);return;}
     enterFarmMode(hit.index);return;}selectedPlotIndex=hit.index;}
@@ -307,18 +327,19 @@ function frame(animationNow) {
   lastAnimationNow=animationNow;
   renderer.resize();
   const { cssW, cssH } = renderer.size;
+  const cameraHeight=cameraViewportHeight(cssH);
   if (!cameraInitialized) {
     Object.assign(camera,homeCamera(computeLayout(cssW,cssH)));
     cameraInitialized = true;
   }
   if(cameraTween) {
     const a=cameraTween,t=Math.min(1,(animationNow-a.start)/520);
-    const view=computeLayout(cssW,cssH);
+    const view=computeLayout(cssW,cameraHeight);
     const target=a.id==='house'?homeCamera(view):cameraForZone(view,a.id);
     Object.assign(camera,interpolateCamera(a.from,target,t));
     if(t>=1)cameraTween=null;
   }
-  clampCamera(camera, cssW, cssH);
+  clampCamera(camera, cssW, cameraHeight);
   layout = computeLayout(cssW, cssH, camera);
   drawnLivestock=livestockViews(state,layout,animationNow);
   // Growth uses Unix time, matching persisted plantedAt. rAF time is cosmetic only.
@@ -340,12 +361,12 @@ function bindCamera() {
   window.visualViewport?.addEventListener('resize', cancelGestures);
   const local = e => canvasInput(canvas, e.clientX, e.clientY);
   const sync = () => {
-    clampCamera(camera, renderer.size.cssW, renderer.size.cssH);
+    clampCamera(camera, renderer.size.cssW, cameraViewportHeight(renderer.size.cssH));
     layout = computeLayout(renderer.size.cssW, renderer.size.cssH, camera);
   };
   const zoom = (factor, before, after = before) => {
     cameraTween=null;
-    const z = Math.max(coverMinZoom(renderer.size.cssW, renderer.size.cssH), Math.min(WORLD.maxZoom, camera.zoom * factor));
+    const z = Math.max(coverMinZoom(renderer.size.cssW, cameraViewportHeight(renderer.size.cssH)), Math.min(WORLD.maxZoom, camera.zoom * factor));
     camera.x = after.x - (before.x - camera.x) * z / camera.zoom;
     camera.y = after.y - (before.y - camera.y) * z / camera.zoom;
     camera.zoom = z; sync();

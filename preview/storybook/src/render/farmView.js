@@ -1,14 +1,14 @@
-import { drawFarmer } from './farmerView.js?v=0019904d88fd';
-import { makeZones, drawLivestock, walkPolygon, ANIMAL_BUBBLE_RADIUS } from './livestockView.js?v=0019904d88fd';
-import { drawAnchored } from './assets.js?v=0019904d88fd';
-import { drawScenery } from './scenery.js?v=0019904d88fd';
-import { formatMs } from '../game/config.js?v=0019904d88fd';
-import { getPlotView } from '../game/systems/farm.js?v=0019904d88fd';
-import { fillRoundRect, drawText } from './draw.js?v=0019904d88fd';
+import { drawFarmer } from './farmerView.js?v=f4838dd5f949';
+import { makeZones, drawLivestock, walkPolygon, ANIMAL_BUBBLE_RADIUS } from './livestockView.js?v=f4838dd5f949';
+import { drawAnchored } from './assets.js?v=f4838dd5f949';
+import { drawScenery } from './scenery.js?v=f4838dd5f949';
+import { formatMs } from '../game/config.js?v=f4838dd5f949';
+import { getPlotView } from '../game/systems/farm.js?v=f4838dd5f949';
+import { fillRoundRect, drawText } from './draw.js?v=f4838dd5f949';
 
-import { MAP_LAYOUT } from './mapLayout.js?v=0019904d88fd';
-import { drawStorybookSoil } from './storybookScenery.js?v=0019904d88fd';
-import {drawNaturalBeds,drawNaturalCrops} from './naturalFields.js?v=0019904d88fd';
+import { MAP_LAYOUT } from './mapLayout.js?v=f4838dd5f949';
+import { drawStorybookSoil } from './storybookScenery.js?v=f4838dd5f949';
+import {drawNaturalBeds,drawNaturalCrops} from './naturalFields.js?v=f4838dd5f949';
 export const WORLD = MAP_LAYOUT.WORLD;
 // Cover the viewport so painted map edges and the green letterbox never show.
 export function coverMinZoom(w, h) {
@@ -38,7 +38,7 @@ export function zoneBounds(layout, id) {
   return {x,y,w:Math.max(...boxes.map(b=>b.x+b.w))-x+20,h:Math.max(...boxes.map(b=>b.y+b.h))-y+20};
 }
 function fitCamera(layout,b,left=12,right=12,top=48,bottom=12) {
-  const zoom=Math.max(WORLD.minZoom,Math.min(.85,(layout.cssW-left-right)/b.w,(layout.cssH-top-bottom)/b.h));
+  const zoom=Math.max(MAP_LAYOUT.STYLE==='storybook'?coverMinZoom(layout.cssW,layout.cssH):WORLD.minZoom,Math.min(.85,(layout.cssW-left-right)/b.w,(layout.cssH-top-bottom)/b.h));
   const target={zoom,x:left+(layout.cssW-left-right-b.w*zoom)/2-b.x*zoom,y:top+(layout.cssH-top-bottom-b.h*zoom)/2-b.y*zoom};
   clampCamera(target,layout.cssW,layout.cssH);
   return target;
@@ -51,7 +51,7 @@ export function cameraForZone(layout, id) {
   return fitCamera(layout,b,id==='farm'?64:12,id==='farm'?80:id==='pig'?200:56);
 }
 export function fieldCamera(layout){
-  if(MAP_LAYOUT.STYLE==='storybook')return fitCamera(layout,zoneBounds(layout,'farm'),70,88,48,90);
+  if(MAP_LAYOUT.STYLE==='storybook')return fitCamera(layout,zoneBounds(layout,'farm'),70,88,12,12);
   const field=zoneBounds(layout,'farm');
   const house=layout.zones.find(z=>z.id==='house').bounds;
   const sign=MAP_LAYOUT.SIGNS.find(s=>s.id==='house');
@@ -174,7 +174,7 @@ export function drawFarm(ctx, state, layout, { now = Date.now(), animationNow = 
   // Green edges cover any viewport area outside the painted world.
   ctx.fillStyle='#8fbf62';ctx.fillRect(0,0,cssW,cssH);
   ctx.save(); ctx.translate(camera.x, camera.y); ctx.scale(camera.zoom, camera.zoom);
-  drawScenery(ctx, WORLD);
+  drawScenery(ctx, WORLD,Math.max(0,(cssH-camera.y)/camera.zoom-WORLD.h));
   if(MAP_LAYOUT.ENVIRONMENT)drawNaturalBeds(ctx,plots);
   else if(MAP_LAYOUT.STYLE==='storybook')drawStorybookSoil(ctx,plots);
   for (const p of [...plots].sort((a,b)=>a.cy-b.cy)) {

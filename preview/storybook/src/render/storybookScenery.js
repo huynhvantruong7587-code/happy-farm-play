@@ -1,5 +1,5 @@
-import { getImage } from './assets.js?v=0019904d88fd';
-import { STORYBOOK_LAYOUT as MAP } from './storybookLayout.js?v=0019904d88fd';
+import { getImage } from './assets.js?v=f4838dd5f949';
+import { STORYBOOK_LAYOUT as MAP } from './storybookLayout.js?v=f4838dd5f949';
 
 function line(ctx,points,width,color){
   ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));

@@ -1,9 +1,9 @@
-import { ZONE_NAMES } from '../game/config.js?v=0019904d88fd';
-import { getOccupantView } from '../game/systems/livestock.js?v=0019904d88fd';
-import { drawAnchored, drawSprite } from './assets.js?v=0019904d88fd';
-import { fillRoundRect as rect, drawText } from './draw.js?v=0019904d88fd';
+import { ZONE_NAMES } from '../game/config.js?v=f4838dd5f949';
+import { getOccupantView } from '../game/systems/livestock.js?v=f4838dd5f949';
+import { drawAnchored, drawSprite } from './assets.js?v=f4838dd5f949';
+import { fillRoundRect as rect, drawText } from './draw.js?v=f4838dd5f949';
 
-import { MAP_LAYOUT } from './mapLayout.js?v=0019904d88fd';
+import { MAP_LAYOUT } from './mapLayout.js?v=f4838dd5f949';
 export const ANIMAL_BUBBLE_RADIUS=62;
 // Keep bubbles readable when the whole map is on screen (world size grows as zoom drops).
 export const ANIMAL_BUBBLE_MIN_SCREEN=24;
@@ -180,14 +180,15 @@ export function animalBubbles(views,t=0,state=null,zoom=1,layout=null) {
       bubbles.push({...base,x:roof.x,y:roof.y-r-32,r});
       continue;
     }
-    const pip=placeEdgePip(zoneId,layout,bubbles);
+    // The pond uses the same full speech bubble as the pens, never a tiny edge icon.
+    const pip=MAP_LAYOUT.STYLE==='storybook'&&zoneId==='pond'?null:placeEdgePip(zoneId,layout,bubbles);
     if(pip)bubbles.push({...base,...pip,edge:true,aggregated:false});
   }
   if(MAP_LAYOUT.STYLE==='storybook'&&state){
     const events=state.notifications||{};
     const tradeReady=state.market?.customers?.some(c=>c&&(state.inventory[c.wantId]||0)>=c.qty);
     for(const zoneId of ['house','shop','store','market','mill']){
-      if(!events[zoneId]&&!layout?.previewHints&&!(zoneId==='market'&&tradeReady))continue;
+      if(zoneId==='market'?!tradeReady&&!layout?.previewHints:!events[zoneId]&&!layout?.previewHints)continue;
       const roof=MAP_LAYOUT.ZONES[zoneId].roof,placed=placeRoofBubble(zoneId,r,layout);
       if(placed)bubbles.push({zoneId,index:null,aggregated:false,action:'open-zone',label:'有待处理事项',icon:null,zoom,...placed,r,targetX:roof.x,targetY:roof.y-12});
     }

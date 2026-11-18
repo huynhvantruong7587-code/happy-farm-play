@@ -22,7 +22,7 @@ const ZONES={
  market:zone('market',[345,703,285,165],[490,708],[347,704,280,160],[502,892]),
 };
 const water=Array.from({length:24},(_,i)=>{const a=i*Math.PI/12;return [1355+118*Math.cos(a),229+60*Math.sin(a)];});
-ZONES.pond=zone('pond',[1200,126,315,220],[1440,350],null,[1450,362],{walk:polygon(water),yard:{rx:118*S,ry:60*S},slots:[[1280,220],[1320,195],[1360,205],[1400,215],[1295,250],[1335,260],[1375,245],[1420,250]].map(([cx,cy],index)=>({index,cx:cx*S,cy:cy*S}))});
+ZONES.pond=zone('pond',[1200,126,315,220],[1355,145],null,[1450,362],{walk:polygon(water),yard:{rx:118*S,ry:60*S},slots:[[1280,220],[1320,195],[1360,205],[1400,215],[1295,250],[1335,260],[1375,245],[1420,250]].map(([cx,cy],index)=>({index,cx:cx*S,cy:cy*S}))});
 export const STORYBOOK_LAYOUT={
  STYLE:'storybook',ENVIRONMENT:'redesign/farm-world-environment.png',WORLD:{w:1536*S,h:1024*S,minZoom:.1,maxZoom:1.8},MAP:{file:'redesign/farm-world-environment.png',x:0,y:0,w:1536*S,h:1024*S},ANIMAL_SCALE:1.1,FARMER_START:point([442,628]),ZONES,FRONTS:{},SIGNS:[],
  DECORATION_BOUNDS:{entranceFence:box(790,925,190,60)},
