@@ -1,7 +1,7 @@
-import {ANIMALS,PEN_ZONES,ZONE_NAMES,CROPS,PRODUCTS,slotCount,slotUnlockLevel,formatMs} from '../game/config.js?v=587b0539db14';
-import {getOccupantView,previewMeatHarvest} from '../game/systems/livestock.js?v=587b0539db14';
-import {itemIcon,itemCount} from './icons.js?v=587b0539db14';
-import {bindHorizontalScroll} from './horizontalScroll.js?v=587b0539db14';
+import {ANIMALS,PEN_ZONES,ZONE_NAMES,CROPS,PRODUCTS,slotCount,slotUnlockLevel,formatMs} from '../game/config.js?v=167e955d2030';
+import {getOccupantView,previewMeatHarvest} from '../game/systems/livestock.js?v=167e955d2030';
+import {itemIcon,itemCount} from './icons.js?v=167e955d2030';
+import {bindHorizontalScroll} from './horizontalScroll.js?v=167e955d2030';
 
 const customerNames={bunny:'兔子客人',bear:'小熊客人',fox:'狐狸客人',duck:'鸭子客人',cat:'猫咪客人',boy:'邻家男孩'};
 const art=id=>`<span class="natural-item-art">${itemIcon(id)}</span>`;

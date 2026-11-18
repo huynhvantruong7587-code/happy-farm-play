@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>温馨小镇 · 开心农场</title>
+<script>const u=new URL(location.href);u.searchParams.set('scene','storybook');history.replaceState(null,'',u);</script>
+<link rel="stylesheet" href="css/style.css?v=167e955d2030"><link rel="stylesheet" href="css/natural-dialogs.css?v=167e955d2030"><link rel="stylesheet" href="css/town.css?v=167e955d2030">
+</head><body><div id="app" class="storybook town-app">
+<header class="town-hud"><a href="index.html?scene=storybook" class="town-link">‹ 返回农场</a><strong>🌿 温馨小镇</strong><span class="town-coins">🪙 <b id="town-coins"></b></span></header>
+<main class="stage"><canvas id="town-canvas" aria-label="小镇地图，拖动探索，点击餐馆查看修复，点击道路行走"></canvas><p class="town-caption">拖动逛逛 · 点击餐馆 · 点击道路行走</p></main>
+<nav class="town-tools"><button id="town-home">餐馆</button><button id="town-overview">全景</button></nav>
+<div id="town-loading" role="status">正在走进小镇…</div>
+<div id="town-dialog" class="town-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="town-dialog-title"><section class="town-panel"><header><h2 id="town-dialog-title"></h2><button id="town-dialog-close" class="town-close" aria-label="关闭">×</button></header><div id="town-dialog-content"></div></section></div>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+</div><script type="module" src="src/townMain.js?v=167e955d2030"></script></body></html>

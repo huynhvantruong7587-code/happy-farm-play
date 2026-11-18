@@ -22,6 +22,7 @@ export function initNaturalChrome(){
     b.innerHTML=`<span class="natural-action-icon" aria-hidden="true">${{shop:'🛒',bag:'🧺',more:'✦'}[id]}</span><span>${label}</span>`;
   });
   document.querySelector('.hud-title').innerHTML='<span aria-hidden="true">🌿</span> 开心农场';
+  const town=document.createElement('a');town.className='town-entry';town.href='town.html';town.textContent='🏡 小镇';town.setAttribute('aria-label','前往温馨小镇');document.querySelector('.hud-title').after(town);
   document.querySelector('.hud-coins').setAttribute('aria-label','金币');
   document.querySelector('.hud-xp').setAttribute('aria-label','等级与经验');
   const more=document.getElementById('panel-more'),overlay=document.createElement('div');overlay.className='natural-commerce-overlay';more.before(overlay);overlay.append(more);more.classList.add('natural-commerce');more.setAttribute('aria-modal','true');

@@ -1,6 +1,6 @@
-import {CROP_LIST,PRODUCTS,ANIMALS,FEED,formatGrowTime} from '../game/config.js?v=587b0539db14';
-import {itemIcon,itemCount} from './icons.js?v=587b0539db14';
-import {bindHorizontalScroll} from './horizontalScroll.js?v=587b0539db14';
+import {CROP_LIST,PRODUCTS,ANIMALS,FEED,formatGrowTime} from '../game/config.js?v=167e955d2030';
+import {itemIcon,itemCount} from './icons.js?v=167e955d2030';
+import {bindHorizontalScroll} from './horizontalScroll.js?v=167e955d2030';
 
 const art=id=>`<span class="commerce-art">${itemIcon(id)}</span>`;
 const animalArt=a=>`<span class="commerce-art"><img src="assets/animals/${a.id}-0.webp" alt="${a.name}"></span>`;

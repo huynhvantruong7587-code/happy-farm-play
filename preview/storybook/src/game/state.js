@@ -1,7 +1,8 @@
-import { farmerStart } from '../render/farmerView.js?v=587b0539db14';
-import { ensureMarket } from './systems/market.js?v=587b0539db14';
-import { GAME, CROPS, ANIMALS, PRODUCTS, PEN_ZONES } from './config.js?v=587b0539db14';
-import { MAP_LAYOUT } from '../render/mapLayout.js?v=587b0539db14';
+import { farmerStart } from '../render/farmerView.js?v=167e955d2030';
+import { ensureMarket } from './systems/market.js?v=167e955d2030';
+import { GAME, CROPS, ANIMALS, PRODUCTS, PEN_ZONES } from './config.js?v=167e955d2030';
+import { MAP_LAYOUT } from '../render/mapLayout.js?v=167e955d2030';
+import {normalizeTown} from './systems/town.js?v=167e955d2030';
 
 function emptyCounts() {
   const counts = {};
@@ -32,6 +33,7 @@ export function createInitialState(now = Date.now()) {
     })),
     stats: { planted: 0, harvested: 0, earned: 0, spent: 0 },
     flags: { welcomed: false },
+    town:normalizeTown(),
     createdAt: now,
     updatedAt: now,
   };
@@ -51,6 +53,7 @@ export function normalizeState(raw, now = Date.now()) {
     inventory: { ...base.inventory, ...(raw.inventory || {}) },
     stats: { ...base.stats, ...(raw.stats || {}) },
     flags: { ...base.flags, ...(raw.flags || {}) },
+    town:normalizeTown(raw.town),
   };
 
   const expected = plotCount();

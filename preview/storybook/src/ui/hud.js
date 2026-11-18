@@ -1,4 +1,4 @@
-import { xpProgress } from '../game/systems/progression.js?v=587b0539db14';
+import { xpProgress } from '../game/systems/progression.js?v=167e955d2030';
 
 export function updateHud(state) {
   const coins = document.getElementById('hud-coins');

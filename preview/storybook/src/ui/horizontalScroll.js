@@ -1,4 +1,4 @@
-import {mapInput} from './inputMap.js?v=587b0539db14';
+import {mapInput} from './inputMap.js?v=167e955d2030';
 
 // One gesture owner for mouse and touch, including the quarter-turned phone UI.
 export function bindHorizontalScroll(list){
